@@ -76,8 +76,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Tables Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Tables Grid - 2x2 Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Product Categories */}
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-6 border-b border-gray-200">
@@ -87,17 +87,17 @@ const Dashboard = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordered</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordered</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {topCategories.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.category}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.category}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
                   </tr>
                 ))}
               </tbody>
@@ -114,17 +114,17 @@ const Dashboard = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordered</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordered</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {topProducts.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.product}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.product}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
                   </tr>
                 ))}
               </tbody>
@@ -132,8 +132,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Top Customers */}
-        <div className="bg-white rounded-lg border border-gray-200 xl:col-span-2">
+        {/* Top Customers - First Row, Full Width in Second Column */}
+        <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">Top Customers</h3>
           </div>
@@ -141,19 +141,60 @@ const Dashboard = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordered</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordered</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {topCustomers.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.customer}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.customer}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Additional Table - To complete 2x2 grid */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">New Rental Order</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">2 hours ago</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="status-badge bg-green-100 text-green-800">Completed</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">Product Return</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">4 hours ago</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="status-badge bg-blue-100 text-blue-800">Processing</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">Stock Update</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">6 hours ago</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="status-badge bg-yellow-100 text-yellow-800">Pending</span>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
