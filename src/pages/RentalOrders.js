@@ -128,7 +128,10 @@ const RentalOrders = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Rental Orders</h1>
         <div className="flex items-center space-x-4">
-          <button className="btn-primary flex items-center space-x-2">
+          <button
+            onClick={() => alert('Create New Rental Order - This would open a form to create a new rental order')}
+            className="btn-primary flex items-center space-x-2"
+          >
             <Plus size={16} />
             <span>Create</span>
           </button>
