@@ -38,26 +38,26 @@ const Cart = () => {
   const total = subtotal + deliveryCharge + taxes;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b-2 border-gray-200 shadow-sm">
+      <header className="bg-white border-b border-gray-300 shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
-              <Link to="/shop" className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+              <Link to="/shop" className="text-xl font-bold text-black hover:text-gray-600 transition-colors">
                 🏠 Home
               </Link>
               <nav className="hidden md:flex space-x-6">
-                <Link to="/shop" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                <Link to="/shop" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
                   Home
                 </Link>
-                <Link to="/shop" className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-medium">
+                <Link to="/shop" className="px-4 py-2 bg-black text-white rounded-full font-medium">
                   Rental Shop
                 </Link>
-                <Link to="/shop/wishlist" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                <Link to="/shop/wishlist" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
                   Wishlist
                 </Link>
-                <Link to="/shop/contact" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                <Link to="/shop/contact" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
                   Contact us
                 </Link>
               </nav>
@@ -65,15 +65,15 @@ const Cart = () => {
             
             <div className="flex items-center space-x-4">
               <div className="relative group">
-                <button className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-3 py-2 rounded-full hover:bg-blue-200 transition-all duration-200">
+                <button className="flex items-center space-x-2 bg-gray-100 text-black px-3 py-2 rounded-full hover:bg-gray-200 transition-all duration-200">
                   <User className="h-5 w-5" />
                   <span className="text-sm font-medium">admin</span>
-                  <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center">
                     <span className="text-white text-xs">📋</span>
                   </div>
                 </button>
               </div>
-              <Link to="/shop/contact" className="text-blue-600 hover:text-blue-800 transition-colors">
+              <Link to="/shop/contact" className="text-black hover:text-gray-600 transition-colors">
                 <MessageCircle className="h-6 w-6" />
               </Link>
             </div>
@@ -96,13 +96,13 @@ const Cart = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-6">
-            <h1 className="text-3xl font-bold text-red-500">Order Overview</h1>
+            <h1 className="text-3xl font-bold text-black">Order Overview</h1>
             
             <div className="space-y-6">
               {cartItems.map((item) => (
-                <div key={item.id} className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div key={item.id} className="bg-white border border-gray-300 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
                   <div className="flex items-center space-x-6">
-                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-gray-200 flex items-center justify-center">
+                    <div className="w-24 h-24 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center">
                       <div className="w-16 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
                         <div className="w-10 h-8 bg-gray-300 rounded flex items-center justify-center">
                           <span className="text-gray-500 text-xs font-medium">IMG</span>
@@ -112,13 +112,13 @@ const Cart = () => {
                     
                     <div className="flex-1">
                       <h3 className="font-bold text-gray-900 text-lg mb-2">{item.name}</h3>
-                      <p className="text-2xl font-bold text-green-600">₹{item.price.toFixed(2)}</p>
+                      <p className="text-2xl font-bold text-black">₹{item.price.toFixed(2)}</p>
                     </div>
                     
                     <div className="flex items-center space-x-6">
                       <div className="flex items-center space-x-3">
                         <span className="text-sm font-bold text-gray-700">Qty</span>
-                        <div className="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                        <div className="flex items-center border border-gray-400 rounded-lg overflow-hidden">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             className="p-2 hover:bg-gray-100 transition-colors"
@@ -135,7 +135,7 @@ const Cart = () => {
                         </div>
                       </div>
                       
-                      <button className="p-3 text-gray-400 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition-all duration-200">
+                      <button className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200">
                         <Heart size={20} />
                       </button>
                       
@@ -154,30 +154,30 @@ const Cart = () => {
 
           {/* Order Summary */}
           <div className="space-y-6">
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg">
+            <div className="bg-white border border-gray-300 rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-bold text-gray-900 text-lg">Delivery Charge</h2>
                 <ChevronDown size={16} className="text-gray-400" />
               </div>
-              <p className="text-right text-lg font-bold text-red-500 mb-6">-</p>
+              <p className="text-right text-lg font-bold text-black mb-6">-</p>
               
-              <h2 className="font-bold text-red-500 text-lg mb-2">Sub Total</h2>
-              <p className="text-right text-2xl font-bold text-red-500 mb-6">₹{subtotal}</p>
+              <h2 className="font-bold text-black text-lg mb-2">Sub Total</h2>
+              <p className="text-right text-2xl font-bold text-black mb-6">₹{subtotal}</p>
               
-              <h2 className="font-bold text-red-500 text-lg mb-2">Taxes</h2>
-              <p className="text-right text-lg font-bold text-red-500 mb-6">₹{taxes}</p>
+              <h2 className="font-bold text-black text-lg mb-2">Taxes</h2>
+              <p className="text-right text-lg font-bold text-black mb-6">₹{taxes}</p>
               
-              <div className="border-t-2 border-gray-200 pt-4 mb-6">
+              <div className="border-t border-gray-300 pt-4 mb-6">
                 <div className="flex justify-between items-center">
-                  <h2 className="font-bold text-red-500 text-lg">Total</h2>
-                  <p className="text-2xl font-bold text-red-500">₹{total}</p>
+                  <h2 className="font-bold text-black text-lg">Total</h2>
+                  <p className="text-2xl font-bold text-black">₹{total}</p>
                 </div>
               </div>
 
               {/* Coupon */}
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-3">Apply Coupon</label>
-                <div className="flex overflow-hidden rounded-lg border-2 border-gray-300">
+                <div className="flex overflow-hidden rounded-lg border border-gray-400">
                   <input
                     type="text"
                     value={couponCode}
@@ -192,7 +192,7 @@ const Cart = () => {
               </div>
 
               <Link to="/shop/checkout">
-                <button className="w-full bg-gradient-to-r from-pink-400 to-pink-500 text-white py-4 rounded-xl hover:from-pink-500 hover:to-pink-600 transition-all duration-200 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105">
+                <button className="w-full bg-black text-white py-4 rounded-lg hover:bg-gray-800 transition-all duration-200 font-bold text-lg shadow-md hover:shadow-lg transform hover:scale-105">
                   Proceed to checkout
                 </button>
               </Link>
