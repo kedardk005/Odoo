@@ -13,7 +13,7 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex space-x-8">
           {navItems.map((item) => {
@@ -23,10 +23,10 @@ const Navigation = () => {
                 key={item.name}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  `flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 hover:shadow-sm hover:bg-gray-50 rounded-t-lg ${
                     isActive
-                      ? 'text-black border-black'
-                      : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                      ? 'text-primary-600 border-primary-600 bg-primary-50 shadow-sm'
+                      : 'text-gray-500 border-transparent hover:text-primary-500 hover:border-primary-300'
                   }`
                 }
               >
