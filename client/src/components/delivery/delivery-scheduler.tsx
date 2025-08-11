@@ -1,237 +1,307 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Truck, User, MapPin } from "lucide-react";
-import { api } from "@/lib/api";
+import { Truck, Calendar as CalendarIcon, Clock, MapPin, User, Phone } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import type { Delivery, OrderWithDetails } from "@shared/schema";
 
-export function DeliveryScheduler() {
-  const { data: deliveries } = useQuery({
-    queryKey: ["/api/deliveries"],
-    queryFn: () => api.getDeliveries(),
-  });
+interface DeliverySchedulerProps {
+  orders: OrderWithDetails[];
+  deliveries: Delivery[];
+  onScheduleDelivery: (deliveryData: any) => void;
+  onUpdateDeliveryStatus: (id: string, status: string) => void;
+}
 
-  const { data: orders } = useQuery({
-    queryKey: ["/api/orders"],
-    queryFn: () => api.getOrders(),
-  });
+export function DeliveryScheduler({ 
+  orders, 
+  deliveries, 
+  onScheduleDelivery, 
+  onUpdateDeliveryStatus 
+}: DeliverySchedulerProps) {
+  const [selectedOrder, setSelectedOrder] = useState<string>("");
+  const [deliveryType, setDeliveryType] = useState<"pickup" | "return">("pickup");
+  const [scheduledDate, setScheduledDate] = useState<Date>();
+  const [scheduledTime, setScheduledTime] = useState("");
+  const [driverName, setDriverName] = useState("");
+  const [driverPhone, setDriverPhone] = useState("");
+  const [notes, setNotes] = useState("");
 
-  // Mock driver data for demonstration
-  const drivers = [
-    { id: "1", name: "John Smith", initials: "JS", activeRoutes: 3 },
-    { id: "2", name: "Mike Johnson", initials: "MJ", activeRoutes: 2 },
-    { id: "3", name: "Sarah Wilson", initials: "SW", activeRoutes: 1 },
-  ];
-
-  const todaysDeliveries = deliveries?.filter(delivery => {
-    const today = new Date();
-    const deliveryDate = new Date(delivery.scheduledDate);
-    return deliveryDate.toDateString() === today.toDateString();
-  }) || [];
-
-  // Group deliveries by driver (mock grouping)
-  const deliveriesByDriver = todaysDeliveries.reduce((acc, delivery) => {
-    const driverName = delivery.driverName || "Unassigned";
-    if (!acc[driverName]) {
-      acc[driverName] = [];
-    }
-    acc[driverName].push(delivery);
-    return acc;
-  }, {} as Record<string, typeof todaysDeliveries>);
-
-  const formatTime = (time: string) => {
-    return time; // Assuming time is already formatted
-  };
-
-  const formatAddress = (address: string) => {
-    return address.length > 30 ? address.substring(0, 30) + "..." : address;
-  };
-
-  const getDeliveryTypeColor = (type: string) => {
-    switch (type) {
-      case 'pickup':
-        return 'bg-blue-100 text-blue-800';
-      case 'return':
-        return 'bg-green-100 text-green-800';
+  const getDeliveryStatusBadge = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return <Badge variant="secondary">Scheduled</Badge>;
+      case "in_transit":
+        return <Badge variant="default">In Transit</Badge>;
+      case "delivered":
+        return <Badge variant="success" className="bg-green-100 text-green-800">Delivered</Badge>;
+      case "completed":
+        return <Badge variant="success" className="bg-blue-100 text-blue-800">Completed</Badge>;
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  // Generate weekly calendar dates
-  const getWeekDates = () => {
-    const today = new Date();
-    const week = [];
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Start from Monday
+  const handleScheduleDelivery = () => {
+    if (!selectedOrder || !scheduledDate || !scheduledTime) return;
 
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
-      week.push(date);
-    }
-    return week;
+    const selectedOrderData = orders.find(order => order.id === selectedOrder);
+    if (!selectedOrderData) return;
+
+    const deliveryData = {
+      orderId: selectedOrder,
+      type: deliveryType,
+      address: selectedOrderData.customer.address || "Address not provided",
+      scheduledDate: scheduledDate.toISOString(),
+      scheduledTime,
+      driverName: driverName || null,
+      driverPhone: driverPhone || null,
+      notes: notes || null,
+      status: "scheduled",
+    };
+
+    onScheduleDelivery(deliveryData);
+
+    // Reset form
+    setSelectedOrder("");
+    setScheduledDate(undefined);
+    setScheduledTime("");
+    setDriverName("");
+    setDriverPhone("");
+    setNotes("");
   };
 
-  const weekDates = getWeekDates();
-  const today = new Date();
+  const pendingOrders = orders?.filter(order => 
+    order.status === "confirmed" || order.status === "delivered"
+  ) || [];
 
   return (
-    <div className="mt-8">
+    <div className="space-y-6">
+      {/* Schedule New Delivery */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Delivery Management</CardTitle>
-            <div className="flex space-x-2">
-              <Select defaultValue="all">
-                <SelectTrigger className="w-48">
-                  <SelectValue />
+          <CardTitle className="flex items-center">
+            <Truck className="w-5 h-5 mr-2" />
+            Schedule Delivery
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Select Order</Label>
+              <Select value={selectedOrder} onValueChange={setSelectedOrder}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an order" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Drivers</SelectItem>
-                  {drivers.map((driver) => (
-                    <SelectItem key={driver.id} value={driver.id}>
-                      {driver.name}
+                  {pendingOrders.map((order) => (
+                    <SelectItem key={order.id} value={order.id}>
+                      {order.orderNumber} - {order.customer.firstName} {order.customer.lastName}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button>
-                <CalendarDays className="w-4 h-4 mr-2" />
-                Schedule Delivery
-              </Button>
+            </div>
+
+            <div>
+              <Label>Delivery Type</Label>
+              <Select value={deliveryType} onValueChange={(value: "pickup" | "return") => setDeliveryType(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pickup">Pickup/Delivery</SelectItem>
+                  <SelectItem value="return">Return/Collection</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Scheduled Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !scheduledDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {scheduledDate ? format(scheduledDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={scheduledDate}
+                    onSelect={setScheduledDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div>
+              <Label>Scheduled Time</Label>
+              <Input
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Driver Name</Label>
+              <Input
+                placeholder="Enter driver name"
+                value={driverName}
+                onChange={(e) => setDriverName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label>Driver Phone</Label>
+              <Input
+                placeholder="Enter driver phone"
+                value={driverPhone}
+                onChange={(e) => setDriverPhone(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Notes</Label>
+            <Textarea
+              placeholder="Additional delivery instructions..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <Button 
+            onClick={handleScheduleDelivery}
+            disabled={!selectedOrder || !scheduledDate || !scheduledTime}
+            className="w-full md:w-auto"
+          >
+            Schedule Delivery
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Scheduled Deliveries */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Scheduled Deliveries</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Weekly Calendar View */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Overview</h3>
-            <div className="grid grid-cols-7 gap-4 mb-6">
-              {weekDates.map((date, index) => {
-                const isToday = date.toDateString() === today.toDateString();
-                const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                
+          {deliveries && deliveries.length > 0 ? (
+            <div className="space-y-4">
+              {deliveries.map((delivery) => {
+                const order = orders.find(o => o.id === delivery.orderId);
                 return (
-                  <div key={index} className="text-center">
-                    <div className="text-sm font-medium text-gray-500 mb-2">
-                      {dayNames[index]}
-                    </div>
-                    <div className={`text-lg font-semibold ${
-                      isToday 
-                        ? "text-primary bg-blue-100 rounded-lg py-1" 
-                        : "text-gray-900"
-                    }`}>
-                      {date.getDate()}
+                  <div key={delivery.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={delivery.type === "pickup" ? "default" : "secondary"}>
+                            {delivery.type === "pickup" ? "Pickup" : "Return"}
+                          </Badge>
+                          {getDeliveryStatusBadge(delivery.status)}
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2 text-sm">
+                            <User className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium">
+                              {order ? `${order.customer.firstName} ${order.customer.lastName}` : "Unknown Customer"}
+                            </span>
+                            <span className="text-gray-500">
+                              ({order?.orderNumber || "Unknown Order"})
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <CalendarIcon className="w-4 h-4 text-gray-400" />
+                            <span>
+                              {format(new Date(delivery.scheduledDate), "PPP")} at {delivery.scheduledTime}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span>{delivery.address}</span>
+                          </div>
+                          
+                          {delivery.driverName && (
+                            <div className="flex items-center space-x-2 text-sm text-gray-600">
+                              <Truck className="w-4 h-4 text-gray-400" />
+                              <span>{delivery.driverName}</span>
+                              {delivery.driverPhone && (
+                                <>
+                                  <Phone className="w-4 h-4 text-gray-400" />
+                                  <span>{delivery.driverPhone}</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          
+                          {delivery.notes && (
+                            <div className="text-sm text-gray-600 mt-2">
+                              <strong>Notes:</strong> {delivery.notes}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        {delivery.status === "scheduled" && (
+                          <Button
+                            size="sm"
+                            onClick={() => onUpdateDeliveryStatus(delivery.id, "in_transit")}
+                          >
+                            Start Delivery
+                          </Button>
+                        )}
+                        {delivery.status === "in_transit" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onUpdateDeliveryStatus(delivery.id, "delivered")}
+                          >
+                            Mark Delivered
+                          </Button>
+                        )}
+                        {delivery.status === "delivered" && delivery.type === "pickup" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onUpdateDeliveryStatus(delivery.id, "completed")}
+                          >
+                            Complete
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-
-          {/* Today's Routes */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">Today's Routes</h3>
-            
-            {Object.keys(deliveriesByDriver).length > 0 ? (
-              Object.entries(deliveriesByDriver).map(([driverName, driverDeliveries]) => {
-                const driver = drivers.find(d => d.name === driverName) || {
-                  name: driverName,
-                  initials: driverName.split(' ').map(n => n[0]).join(''),
-                  activeRoutes: driverDeliveries.length
-                };
-
-                return (
-                  <div key={driverName} className="border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">
-                            {driver.initials}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{driver.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {driverDeliveries.length} deliveries scheduled
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className="bg-green-100 text-green-800">Active</Badge>
-                        <Button variant="outline" size="sm">
-                          <Truck className="w-4 h-4 mr-1" />
-                          Track Route
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {driverDeliveries.map((delivery) => {
-                        const order = orders?.find(o => o.id === delivery.orderId);
-                        
-                        return (
-                          <div key={delivery.id} className="bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-sm font-medium text-gray-900">
-                                {formatTime(delivery.scheduledTime)} - {delivery.type}
-                              </p>
-                              <Badge className={getDeliveryTypeColor(delivery.type)}>
-                                {delivery.type}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              #{order?.orderNumber || delivery.orderId.slice(-6)}
-                            </p>
-                            <div className="flex items-center text-xs text-gray-500 mt-1">
-                              <MapPin className="w-3 h-3 mr-1" />
-                              {formatAddress(delivery.address)}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-12">
-                <CalendarDays className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Deliveries Scheduled</h3>
-                <p className="text-gray-500 mb-4">No deliveries are scheduled for today.</p>
-                <Button>
-                  <CalendarDays className="w-4 h-4 mr-2" />
-                  Schedule First Delivery
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Driver Performance Summary */}
-          {drivers.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Driver Overview</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {drivers.map((driver) => (
-                  <div key={driver.id} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                        <span className="text-white font-semibold text-xs">
-                          {driver.initials}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{driver.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {driver.activeRoutes} active route{driver.activeRoutes !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No deliveries scheduled
             </div>
           )}
         </CardContent>

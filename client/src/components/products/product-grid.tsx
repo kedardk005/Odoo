@@ -1,195 +1,140 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Plus, ShoppingCart } from "lucide-react";
-import { api } from "@/lib/api";
+import { Package, Eye, Edit, Plus, Minus } from "lucide-react";
 import type { ProductWithCategory } from "@shared/schema";
 
 interface ProductGridProps {
-  products?: ProductWithCategory[];
-  showHeader?: boolean;
-  onAddToCart?: (product: ProductWithCategory) => void;
-  showAddToCart?: boolean;
+  products: ProductWithCategory[];
+  isLoading?: boolean;
+  onAddToCart?: (product: ProductWithCategory, quantity: number) => void;
 }
 
-export function ProductGrid({ products, showHeader = false, onAddToCart, showAddToCart = false }: ProductGridProps) {
-  const { data: fetchedProducts, isLoading } = useQuery({
-    queryKey: ["/api/products"],
-    queryFn: () => api.getProducts(),
-    enabled: !products,
-  });
-
-  const displayProducts = products || fetchedProducts;
-
-  const formatCurrency = (amount: string) => {
-    return `$${parseFloat(amount).toFixed(0)}`;
+export function ProductGrid({ products, isLoading, onAddToCart }: ProductGridProps) {
+  const handleAddToCart = (product: ProductWithCategory) => {
+    onAddToCart?.(product, 1);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'available':
-        return 'status-available';
-      case 'rented':
-        return 'status-rented';
-      case 'maintenance':
-        return 'status-maintenance';
+      case "available":
+        return <Badge variant="success" className="bg-green-100 text-green-800">Available</Badge>;
+      case "rented":
+        return <Badge variant="destructive">Rented</Badge>;
+      case "maintenance":
+        return <Badge variant="secondary">Maintenance</Badge>;
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getStatusText = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
-
-  if (isLoading && !products) {
+  if (isLoading) {
     return (
-      <Card>
-        {showHeader && (
-          <CardHeader>
-            <CardTitle>Equipment Catalog</CardTitle>
-          </CardHeader>
-        )}
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
-                <Skeleton className="w-full h-48" />
-                <div className="p-4">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2 mb-4" />
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-1/3" />
-                    <Skeleton className="h-8 w-20" />
-                  </div>
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <Card key={index} className="animate-pulse">
+            <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+            <CardHeader>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!products?.length) {
+    return (
+      <div className="text-center py-12">
+        <Package className="mx-auto h-12 w-12 text-gray-400" />
+        <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Try adjusting your search or filter criteria.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      {showHeader && (
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Equipment Catalog</CardTitle>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Product
-            </Button>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {products.map((product) => (
+        <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-200">
+          <div className="relative">
+            <img
+              src={product.imageUrl || 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300'}
+              alt={product.name}
+              className="w-full h-48 object-cover rounded-t-lg"
+            />
+            <div className="absolute top-2 right-2">
+              {getStatusBadge(product.status)}
+            </div>
+            <div className="absolute top-2 left-2">
+              <Badge variant="outline" className="bg-white/90">
+                {product.category?.name || 'Uncategorized'}
+              </Badge>
+            </div>
           </div>
-        </CardHeader>
-      )}
-      <CardContent>
-        {displayProducts && displayProducts.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayProducts.map((product) => (
-                <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                  <img 
-                    src={product.imageUrl || 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'}
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-                        <p className="text-sm text-gray-500 truncate">
-                          {product.category?.name || 'Uncategorized'}
-                        </p>
-                      </div>
-                      <Badge className={`ml-2 ${getStatusColor(product.status)}`}>
-                        {getStatusText(product.status)}
-                      </Badge>
-                    </div>
-                    
-                    {product.description && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {product.description}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600">
-                        <span className="font-semibold text-gray-900">
-                          {formatCurrency(product.dailyRate)}/day
-                        </span>
-                        {product.availableQuantity !== product.quantity && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {product.availableQuantity} of {product.quantity} available
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex space-x-2">
-                        {showAddToCart && onAddToCart && product.availableQuantity > 0 && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => onAddToCart(product)}
-                          >
-                            <ShoppingCart className="w-4 h-4 mr-1" />
-                            Add
-                          </Button>
-                        )}
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          disabled={product.status === 'maintenance'}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                      </div>
-                    </div>
+          
+          <CardHeader className="pb-2">
+            <div className="space-y-1">
+              <h3 className="font-semibold text-lg text-gray-900 group-hover:text-primary transition-colors">
+                {product.name}
+              </h3>
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {product.description || 'No description available'}
+              </p>
+            </div>
+          </CardHeader>
+
+          <CardContent className="pt-0">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-2xl font-bold text-primary">
+                    ₹{parseFloat(product.dailyRate).toLocaleString()}
+                  </span>
+                  <span className="text-sm text-gray-500">/day</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">
+                    Available: {product.availableQuantity}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Total: {product.quantity}
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {showHeader && displayProducts.length >= 6 && (
-              <div className="mt-6 flex items-center justify-between">
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">1</span> to{' '}
-                  <span className="font-medium">{Math.min(6, displayProducts.length)}</span> of{' '}
-                  <span className="font-medium">{displayProducts.length}</span> products
-                </p>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" disabled>
-                    Previous
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-primary text-white">
-                    1
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    2
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    3
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Next
-                  </Button>
-                </div>
               </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">No products found</div>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add First Product
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                >
+                  <Eye className="w-4 h-4 mr-1" />
+                  View
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleAddToCart(product)}
+                  disabled={product.status !== 'available' || product.availableQuantity === 0}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Rent
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

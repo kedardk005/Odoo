@@ -1,232 +1,208 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { NavigationHeader } from "@/components/navigation-header";
+import { OrderStatus } from "@/components/orders/order-status";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { OrderStatus } from "@/components/orders/order-status";
-import { Plus, Search, Eye } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, Filter, Eye, Edit, Plus, Download, Calendar } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import type { OrderWithDetails } from "@shared/schema";
 
 export default function Orders() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { toast } = useToast();
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["/api/orders"],
     queryFn: () => api.getOrders(),
   });
 
-  const filteredOrders = orders?.filter(order => {
+  const filteredOrders = orders?.filter((order) => {
     const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !selectedStatus || selectedStatus === "all" || order.status === selectedStatus;
+                         `${order.customer.firstName} ${order.customer.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    
     return matchesSearch && matchesStatus;
-  });
+  }) || [];
 
   const formatCurrency = (amount: string) => {
-    return `$${parseFloat(amount).toLocaleString()}`;
+    return `₹${parseFloat(amount).toLocaleString()}`;
   };
 
-  const formatDateRange = (startDate: string, endDate: string) => {
-    const start = new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const end = new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return `${start} - ${end}`;
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString();
   };
-
-  const calculateDuration = (startDate: string, endDate: string) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return `${diffDays} Day${diffDays !== 1 ? 's' : ''}`;
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <NavigationHeader />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <NavigationHeader />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Orders</h1>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Orders Management</h1>
+            <p className="text-gray-600 mt-1">Track and manage rental orders</p>
+          </div>
+          <div className="flex space-x-2">
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               New Order
             </Button>
           </div>
+        </div>
 
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search orders, customers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+        {/* Filters */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Filter className="w-5 h-5 mr-2" />
+              Filters & Search
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search orders or customers..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="returned">Returned</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" className="w-full">
+                <Calendar className="w-4 h-4 mr-2" />
+                Date Range
+              </Button>
             </div>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="returned">Returned</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+          </CardContent>
+        </Card>
+
+        {/* Results Summary */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-600">
+              {filteredOrders.length} orders found
+            </span>
+            {searchTerm && (
+              <Badge variant="secondary">
+                Search: "{searchTerm}"
+              </Badge>
+            )}
+            {statusFilter !== "all" && (
+              <Badge variant="secondary">
+                Status: {statusFilter}
+              </Badge>
+            )}
           </div>
+          <Button variant="outline" size="sm">
+            Clear Filters
+          </Button>
         </div>
 
         {/* Orders Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>All Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Order ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Customer
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Items
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Duration
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredOrders && filteredOrders.length > 0 ? (
-                    filteredOrders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900">
-                            {order.orderNumber}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-xs font-medium text-gray-600">
-                                {order.customer.firstName[0]}{order.customer.lastName[0]}
-                              </span>
-                            </div>
-                            <div className="ml-3">
-                              <p className="text-sm font-medium text-gray-900">
-                                {order.customer.firstName} {order.customer.lastName}
-                              </p>
-                              <p className="text-sm text-gray-500">{order.customer.email}</p>
-                            </div>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order Number</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Rental Period</TableHead>
+                  <TableHead>Total Amount</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                    </TableRow>
+                  ))
+                ) : filteredOrders.length > 0 ? (
+                  filteredOrders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {order.customer.firstName} {order.customer.lastName}
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
-                            {order.items.length} Item{order.items.length !== 1 ? 's' : ''}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {order.items.slice(0, 2).map(item => item.product.name).join(', ')}
-                            {order.items.length > 2 && `, +${order.items.length - 2} more`}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {calculateDuration(order.startDate, order.endDate)}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {formatDateRange(order.startDate, order.endDate)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {formatCurrency(order.totalAmount)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <OrderStatus status={order.status} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center">
-                        <div className="text-gray-500">
-                          {searchTerm || selectedStatus ? "No orders match your filters" : "No orders found"}
+                          <div className="text-sm text-gray-500">{order.customer.email}</div>
                         </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {filteredOrders && filteredOrders.length > 0 && (
-              <div className="mt-6 flex items-center justify-between">
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">1</span> to{' '}
-                  <span className="font-medium">{Math.min(10, filteredOrders.length)}</span> of{' '}
-                  <span className="font-medium">{filteredOrders.length}</span> orders
-                </p>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" disabled>
-                    Previous
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-primary text-white">
-                    1
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
+                      </TableCell>
+                      <TableCell>
+                        <OrderStatus status={order.status} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{formatDate(order.startDate.toString())} - {formatDate(order.endDate.toString())}</div>
+                          <div className="text-gray-500">
+                            {Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(order.totalAmount)}
+                      </TableCell>
+                      <TableCell className="text-gray-500">
+                        {formatDate(order.createdAt.toString())}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="text-gray-500">No orders found</div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

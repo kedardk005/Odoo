@@ -12,9 +12,14 @@ import { CalendarDays, Bell, Plus, Download } from "lucide-react";
 import { api } from "@/lib/api";
 
 export default function Dashboard() {
-  const { data: metrics } = useQuery({
+  const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ["/api/dashboard/metrics"],
     queryFn: () => api.getDashboardMetrics(),
+  });
+
+  const { data: recentOrders, isLoading: ordersLoading } = useQuery({
+    queryKey: ["/api/dashboard/recent-orders"],
+    queryFn: () => api.getRecentOrders(),
   });
 
   const { data: notifications } = useQuery({
@@ -25,6 +30,11 @@ export default function Dashboard() {
   const { data: deliveries } = useQuery({
     queryKey: ["/api/deliveries"],
     queryFn: () => api.getDeliveries(),
+  });
+
+  const { data: orders } = useQuery({
+    queryKey: ["/api/orders"],
+    queryFn: () => api.getOrders(),
   });
 
   const quickActions = [
@@ -95,8 +105,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Recent Activity & Product Catalog */}
           <div className="lg:col-span-2 space-y-8">
-            <RecentOrders />
-            <ProductGrid showHeader />
+            <RecentOrders orders={recentOrders || []} isLoading={ordersLoading} />
           </div>
 
           {/* Right Column - Quick Actions & Notifications */}
@@ -213,7 +222,12 @@ export default function Dashboard() {
         </div>
 
         {/* Delivery Management Section */}
-        <DeliveryScheduler />
+        <DeliveryScheduler 
+          orders={orders || []} 
+          deliveries={deliveries || []}
+          onScheduleDelivery={() => {}}
+          onUpdateDeliveryStatus={() => {}}
+        />
       </div>
     </div>
   );

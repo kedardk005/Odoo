@@ -5,284 +5,167 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Mail, Phone } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, Plus, Eye, Edit, Phone, Mail } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 
 export default function Customers() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
 
   const { data: customers, isLoading } = useQuery({
     queryKey: ["/api/customers"],
     queryFn: () => api.getCustomers(),
   });
 
-  const { data: orders } = useQuery({
-    queryKey: ["/api/orders"],
-    queryFn: () => api.getOrders(),
-  });
-
-  const filteredCustomers = customers?.filter(customer => {
-    const matchesSearch = customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.phone?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredCustomers = customers?.filter((customer) => {
+    const matchesSearch = 
+      `${customer.firstName} ${customer.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone?.toLowerCase().includes(searchTerm.toLowerCase());
+    
     return matchesSearch;
-  });
+  }) || [];
 
-  const getCustomerStats = (customerId: string) => {
-    const customerOrders = orders?.filter(order => order.customerId === customerId) || [];
-    const totalSpent = customerOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount), 0);
-    const activeRentals = customerOrders.filter(order => order.status === 'delivered').length;
-    
-    return {
-      totalOrders: customerOrders.length,
-      totalSpent,
-      activeRentals,
-      lastOrder: customerOrders.length > 0 ? 
-        Math.max(...customerOrders.map(o => new Date(o.createdAt).getTime())) : null
-    };
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString();
   };
-
-  const formatCurrency = (amount: number) => {
-    return `$${amount.toLocaleString()}`;
-  };
-
-  const formatLastOrder = (timestamp: number | null) => {
-    if (!timestamp) return "Never";
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 30) return `${diffDays} days ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <NavigationHeader />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <NavigationHeader />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Customers</h1>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Customer
-            </Button>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Customer Management</h1>
+            <p className="text-gray-600 mt-1">Manage your customer database</p>
           </div>
-
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search customers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Customer
+          </Button>
         </div>
 
-        {/* Customer Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-gray-900">{customers?.length || 0}</div>
-              <div className="text-sm text-gray-500">Total Customers</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-gray-900">
-                {customers?.filter(c => {
-                  const stats = getCustomerStats(c.id);
-                  return stats.activeRentals > 0;
-                }).length || 0}
-              </div>
-              <div className="text-sm text-gray-500">Active Customers</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-gray-900">
-                {customers?.filter(c => {
-                  const thirtyDaysAgo = new Date();
-                  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                  return new Date(c.createdAt) > thirtyDaysAgo;
-                }).length || 0}
-              </div>
-              <div className="text-sm text-gray-500">New This Month</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(
-                  customers?.reduce((total, customer) => {
-                    const stats = getCustomerStats(customer.id);
-                    return total + stats.totalSpent;
-                  }, 0) || 0
-                )}
-              </div>
-              <div className="text-sm text-gray-500">Total Revenue</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Customers Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Customers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Customer
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Orders
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total Spent
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Last Order
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredCustomers && filteredCustomers.length > 0 ? (
-                    filteredCustomers.map((customer) => {
-                      const stats = getCustomerStats(customer.id);
-                      return (
-                        <tr key={customer.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-sm font-medium text-gray-600">
-                                  {customer.firstName[0]}{customer.lastName[0]}
-                                </span>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {customer.firstName} {customer.lastName}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  Member since {new Date(customer.createdAt).toLocaleDateString()}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-1">
-                              <div className="flex items-center text-sm text-gray-900">
-                                <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                                {customer.email}
-                              </div>
-                              {customer.phone && (
-                                <div className="flex items-center text-sm text-gray-500">
-                                  <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                                  {customer.phone}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{stats.totalOrders}</div>
-                            {stats.activeRentals > 0 && (
-                              <div className="text-sm text-gray-500">
-                                {stats.activeRentals} active
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-semibold text-gray-900">
-                              {formatCurrency(stats.totalSpent)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {formatLastOrder(stats.lastOrder)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge variant={stats.activeRentals > 0 ? "default" : "secondary"}>
-                              {stats.activeRentals > 0 ? "Active" : "Inactive"}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center">
-                        <div className="text-gray-500">
-                          {searchTerm ? "No customers match your search" : "No customers found"}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+        {/* Search */}
+        <Card className="mb-8">
+          <CardContent className="pt-6">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search customers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Pagination */}
-            {filteredCustomers && filteredCustomers.length > 0 && (
-              <div className="mt-6 flex items-center justify-between">
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">1</span> to{' '}
-                  <span className="font-medium">{Math.min(10, filteredCustomers.length)}</span> of{' '}
-                  <span className="font-medium">{filteredCustomers.length}</span> customers
-                </p>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" disabled>
-                    Previous
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-primary text-white">
-                    1
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Next
-                  </Button>
-                </div>
-              </div>
+        {/* Results Summary */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-600">
+              {filteredCustomers.length} customers found
+            </span>
+            {searchTerm && (
+              <Badge variant="secondary">
+                Search: "{searchTerm}"
+              </Badge>
             )}
+          </div>
+          <Button variant="outline" size="sm">
+            Clear Search
+          </Button>
+        </div>
+
+        {/* Customer Table */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                      <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                    </TableRow>
+                  ))
+                ) : filteredCustomers.length > 0 ? (
+                  filteredCustomers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-sm font-medium text-primary">
+                              {customer.firstName[0]}{customer.lastName[0]}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-medium">
+                              {customer.firstName} {customer.lastName}
+                            </div>
+                            <div className="text-sm text-gray-500">{customer.username}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Mail className="w-4 h-4 text-gray-400" />
+                            <span>{customer.email}</span>
+                          </div>
+                          {customer.phone && (
+                            <div className="flex items-center space-x-2 text-sm text-gray-500">
+                              <Phone className="w-4 h-4 text-gray-400" />
+                              <span>{customer.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={customer.role === 'admin' ? 'default' : 'secondary'}>
+                          {customer.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-gray-500">
+                        {formatDate(customer.createdAt.toString())}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      <div className="text-gray-500">No customers found</div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

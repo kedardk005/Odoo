@@ -1,82 +1,156 @@
-import { apiRequest } from "@/lib/queryClient";
-import type { DashboardMetrics, OrderWithDetails, ProductWithCategory, Category, User, Delivery, Payment, Notification } from "@shared/schema";
+import { apiRequest } from "./queryClient";
+import type { 
+  User, 
+  Product, 
+  ProductWithCategory, 
+  Category, 
+  OrderWithDetails, 
+  Delivery, 
+  Payment, 
+  Notification,
+  DashboardMetrics 
+} from "@shared/schema";
 
 export const api = {
-  // Dashboard
-  getDashboardMetrics: () => 
-    apiRequest("GET", "/api/dashboard/metrics").then(res => res.json()) as Promise<DashboardMetrics>,
-  
-  getRecentOrders: (limit?: number) =>
-    apiRequest("GET", `/api/dashboard/recent-orders${limit ? `?limit=${limit}` : ""}`).then(res => res.json()) as Promise<OrderWithDetails[]>,
+  // User/Auth endpoints
+  async register(userData: any): Promise<User> {
+    const response = await apiRequest("POST", "/api/auth/register", userData);
+    return response.json();
+  },
 
-  // Products
-  getProducts: (categoryId?: string) =>
-    apiRequest("GET", `/api/products${categoryId ? `?categoryId=${categoryId}` : ""}`).then(res => res.json()) as Promise<ProductWithCategory[]>,
-  
-  getProduct: (id: string) =>
-    apiRequest("GET", `/api/products/${id}`).then(res => res.json()) as Promise<ProductWithCategory>,
+  async login(credentials: { email: string; password: string }): Promise<User> {
+    const response = await apiRequest("POST", "/api/auth/login", credentials);
+    return response.json();
+  },
 
-  createProduct: (product: any) =>
-    apiRequest("POST", "/api/products", product).then(res => res.json()),
+  // Dashboard endpoints
+  async getDashboardMetrics(): Promise<DashboardMetrics> {
+    const response = await apiRequest("GET", "/api/dashboard/metrics");
+    return response.json();
+  },
 
-  updateProduct: (id: string, product: any) =>
-    apiRequest("PUT", `/api/products/${id}`, product).then(res => res.json()),
+  async getRecentOrders(): Promise<OrderWithDetails[]> {
+    const response = await apiRequest("GET", "/api/dashboard/recent-orders");
+    return response.json();
+  },
 
-  // Categories
-  getCategories: () =>
-    apiRequest("GET", "/api/categories").then(res => res.json()) as Promise<Category[]>,
+  // Product endpoints
+  async getProducts(categoryId?: string): Promise<ProductWithCategory[]> {
+    const url = categoryId ? `/api/products?categoryId=${categoryId}` : "/api/products";
+    const response = await apiRequest("GET", url);
+    return response.json();
+  },
 
-  createCategory: (category: any) =>
-    apiRequest("POST", "/api/categories", category).then(res => res.json()),
+  async getProduct(id: string): Promise<ProductWithCategory> {
+    const response = await apiRequest("GET", `/api/products/${id}`);
+    return response.json();
+  },
 
-  // Orders
-  getOrders: (customerId?: string) =>
-    apiRequest("GET", `/api/orders${customerId ? `?customerId=${customerId}` : ""}`).then(res => res.json()) as Promise<OrderWithDetails[]>,
-  
-  getOrder: (id: string) =>
-    apiRequest("GET", `/api/orders/${id}`).then(res => res.json()) as Promise<OrderWithDetails>,
+  async createProduct(productData: any): Promise<Product> {
+    const response = await apiRequest("POST", "/api/products", productData);
+    return response.json();
+  },
 
-  createOrder: (order: any) =>
-    apiRequest("POST", "/api/orders", order).then(res => res.json()),
+  async updateProduct(id: string, productData: any): Promise<Product> {
+    const response = await apiRequest("PUT", `/api/products/${id}`, productData);
+    return response.json();
+  },
 
-  updateOrderStatus: (id: string, status: string) =>
-    apiRequest("PUT", `/api/orders/${id}/status`, { status }).then(res => res.json()),
+  async deleteProduct(id: string): Promise<void> {
+    await apiRequest("DELETE", `/api/products/${id}`);
+  },
 
-  // Customers
-  getCustomers: () =>
-    apiRequest("GET", "/api/customers").then(res => res.json()) as Promise<User[]>,
+  // Category endpoints
+  async getCategories(): Promise<Category[]> {
+    const response = await apiRequest("GET", "/api/categories");
+    return response.json();
+  },
 
-  // Deliveries
-  getDeliveries: (orderId?: string) =>
-    apiRequest("GET", `/api/deliveries${orderId ? `?orderId=${orderId}` : ""}`).then(res => res.json()) as Promise<Delivery[]>,
+  async createCategory(categoryData: any): Promise<Category> {
+    const response = await apiRequest("POST", "/api/categories", categoryData);
+    return response.json();
+  },
 
-  createDelivery: (delivery: any) =>
-    apiRequest("POST", "/api/deliveries", delivery).then(res => res.json()),
+  // Order endpoints
+  async getOrders(): Promise<OrderWithDetails[]> {
+    const response = await apiRequest("GET", "/api/orders");
+    return response.json();
+  },
 
-  updateDeliveryStatus: (id: string, status: string) =>
-    apiRequest("PUT", `/api/deliveries/${id}/status`, { status }).then(res => res.json()),
+  async getOrder(id: string): Promise<OrderWithDetails> {
+    const response = await apiRequest("GET", `/api/orders/${id}`);
+    return response.json();
+  },
 
-  // Payments
-  getPayments: (orderId?: string) =>
-    apiRequest("GET", `/api/payments${orderId ? `?orderId=${orderId}` : ""}`).then(res => res.json()) as Promise<Payment[]>,
+  async createOrder(orderData: any): Promise<any> {
+    const response = await apiRequest("POST", "/api/orders", orderData);
+    return response.json();
+  },
 
-  createPayment: (payment: any) =>
-    apiRequest("POST", "/api/payments", payment).then(res => res.json()),
+  async updateOrderStatus(id: string, status: string): Promise<any> {
+    const response = await apiRequest("PUT", `/api/orders/${id}/status`, { status });
+    return response.json();
+  },
 
-  // Notifications
-  getNotifications: (userId: string) =>
-    apiRequest("GET", `/api/notifications/${userId}`).then(res => res.json()) as Promise<Notification[]>,
+  // Customer endpoints
+  async getCustomers(): Promise<User[]> {
+    const response = await apiRequest("GET", "/api/customers");
+    return response.json();
+  },
 
-  createNotification: (notification: any) =>
-    apiRequest("POST", "/api/notifications", notification).then(res => res.json()),
+  // Delivery endpoints
+  async getDeliveries(orderId?: string): Promise<Delivery[]> {
+    const url = orderId ? `/api/deliveries?orderId=${orderId}` : "/api/deliveries";
+    const response = await apiRequest("GET", url);
+    return response.json();
+  },
 
-  markNotificationRead: (id: string) =>
-    apiRequest("PUT", `/api/notifications/${id}/read`).then(res => res.json()),
+  async createDelivery(deliveryData: any): Promise<Delivery> {
+    const response = await apiRequest("POST", "/api/deliveries", deliveryData);
+    return response.json();
+  },
 
-  // Auth
-  register: (user: any) =>
-    apiRequest("POST", "/api/auth/register", user).then(res => res.json()),
+  async updateDeliveryStatus(id: string, status: string): Promise<Delivery> {
+    const response = await apiRequest("PUT", `/api/deliveries/${id}/status`, { status });
+    return response.json();
+  },
 
-  login: (credentials: { email: string; password: string }) =>
-    apiRequest("POST", "/api/auth/login", credentials).then(res => res.json()),
+  // Payment endpoints
+  async getPayments(orderId?: string): Promise<Payment[]> {
+    const url = orderId ? `/api/payments?orderId=${orderId}` : "/api/payments";
+    const response = await apiRequest("GET", url);
+    return response.json();
+  },
+
+  async createPayment(paymentData: any): Promise<Payment> {
+    const response = await apiRequest("POST", "/api/payments", paymentData);
+    return response.json();
+  },
+
+  // Razorpay payment endpoints
+  async createRazorpayOrder(orderData: any): Promise<any> {
+    const response = await apiRequest("POST", "/api/razorpay/create-order", orderData);
+    return response.json();
+  },
+
+  async verifyRazorpayPayment(verificationData: any): Promise<any> {
+    const response = await apiRequest("POST", "/api/razorpay/verify-payment", verificationData);
+    return response.json();
+  },
+
+  // Notification endpoints
+  async getNotifications(userId: string): Promise<Notification[]> {
+    const response = await apiRequest("GET", `/api/notifications/${userId}`);
+    return response.json();
+  },
+
+  async createNotification(notificationData: any): Promise<Notification> {
+    const response = await apiRequest("POST", "/api/notifications", notificationData);
+    return response.json();
+  },
+
+  async markNotificationRead(id: string): Promise<Notification> {
+    const response = await apiRequest("PUT", `/api/notifications/${id}/read`);
+    return response.json();
+  },
 };

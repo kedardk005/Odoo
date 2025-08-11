@@ -1,84 +1,172 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Search, Bell } from "lucide-react";
+import { 
+  Home, 
+  Package, 
+  ShoppingCart, 
+  Users, 
+  Calendar,
+  Bell,
+  Menu,
+  X,
+  CreditCard
+} from "lucide-react";
 
 export function NavigationHeader() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", current: location === "/" || location === "/dashboard" },
-    { name: "Products", href: "/products", current: location === "/products" },
-    { name: "Orders", href: "/orders", current: location === "/orders" },
-    { name: "Customers", href: "/customers", current: location === "/customers" },
-    { name: "Booking", href: "/booking", current: location === "/booking" },
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Products", href: "/products", icon: Package },
+    { name: "Orders", href: "/orders", icon: ShoppingCart },
+    { name: "Customers", href: "/customers", icon: Users },
+    { name: "Booking", href: "/booking", icon: Calendar },
+    { name: "Checkout", href: "/checkout", icon: CreditCard },
   ];
 
+  const isActivePath = (path: string) => {
+    if (path === "/dashboard" && (location === "/" || location === "/dashboard")) {
+      return true;
+    }
+    return location === path;
+  };
+
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
+          {/* Logo */}
           <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Link href="/">
-                <div className="flex items-center cursor-pointer">
-                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">R</span>
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">RentPro</span>
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-8">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActivePath(item.href)
+                      ? "text-primary bg-primary/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right side */}
+          <div className="flex items-center space-x-4">
+            {/* Notifications */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="w-5 h-5" />
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center"
+                  >
+                    3
+                  </Badge>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <div className="p-2">
+                  <h3 className="font-semibold text-sm mb-2">Notifications</h3>
+                  <div className="space-y-2">
+                    <DropdownMenuItem className="flex-col items-start p-3">
+                      <div className="font-medium text-sm">New order received</div>
+                      <div className="text-xs text-gray-500">Order #ORD-2024-001 requires attention</div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex-col items-start p-3">
+                      <div className="font-medium text-sm">Equipment returned</div>
+                      <div className="text-xs text-gray-500">Camera kit returned by John Doe</div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex-col items-start p-3">
+                      <div className="font-medium text-sm">Payment received</div>
+                      <div className="text-xs text-gray-500">₹5,000 payment processed successfully</div>
+                    </DropdownMenuItem>
                   </div>
-                  <span className="ml-2 text-xl font-bold text-gray-900">RentPro</span>
                 </div>
-              </Link>
-            </div>
-            <div className="hidden md:block ml-10">
-              <div className="flex items-baseline space-x-4">
-                {navigation.map((item) => (
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Profile Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-xs font-medium text-white">JA</span>
+                  </div>
+                  <span className="hidden sm:block text-sm font-medium">John Admin</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Profile Settings</DropdownMenuItem>
+                <DropdownMenuItem>Account Settings</DropdownMenuItem>
+                <DropdownMenuItem>Help & Support</DropdownMenuItem>
+                <DropdownMenuItem>Sign Out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-white">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`${
-                      item.current
-                        ? "text-primary border-b-2 border-primary"
-                        : "text-gray-500 hover:text-gray-700"
-                    } px-3 py-2 text-sm font-medium transition-colors`}
+                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      isActivePath(item.href)
+                        ? "text-primary bg-primary/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
+                    <Icon className="w-5 h-5 mr-3" />
                     {item.name}
                   </Link>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            {/* Search Bar */}
-            <div className="relative hidden sm:block">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search products, orders..."
-                className="w-64 pl-10"
-              />
-            </div>
-            
-            {/* Notifications */}
-            <div className="relative">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-5 w-5 text-gray-400" />
-                <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">
-                  3
-                </Badge>
-              </Button>
-            </div>
-            
-            {/* User Profile */}
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-600">JA</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700 hidden sm:block">John Admin</span>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-    </nav>
+    </header>
   );
 }
