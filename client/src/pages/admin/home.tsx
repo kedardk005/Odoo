@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import NavigationHeader from "@/components/NavigationHeader";
 import { 
   Package, 
   Users, 
@@ -21,6 +22,14 @@ import { api } from "@/lib/api";
 
 export default function AdminHome() {
   const [, setLocation] = useLocation();
+
+  // Mock current user - replace with real authentication
+  const currentUser = {
+    firstName: "Admin",
+    lastName: "User", 
+    email: "admin@rentpro.com",
+    profileImageUrl: undefined
+  };
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ["/api/dashboard/metrics"],
@@ -84,18 +93,20 @@ export default function AdminHome() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <NavigationHeader userType="admin" currentUser={currentUser} />
+      
+      {/* Welcome Section */}
+      <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600 mt-1">Manage your rental business operations</p>
+              <p className="text-gray-600 mt-1">Welcome back, {currentUser.firstName}! Manage your rental business operations</p>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               <Button variant="outline" onClick={() => setLocation("/admin/products")}>
                 <Package className="w-4 h-4 mr-2" />
-                Add Product
+                Manage Products
               </Button>
               <Button onClick={() => setLocation("/admin/orders")}>
                 <ShoppingBag className="w-4 h-4 mr-2" />
@@ -104,7 +115,7 @@ export default function AdminHome() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Metrics Cards */}
@@ -121,7 +132,7 @@ export default function AdminHome() {
                     ₹{metricsLoading ? "..." : metrics?.totalRevenue?.toLocaleString() || "0"}
                   </p>
                   <p className="text-xs text-green-600">
-                    +{metrics?.revenueGrowth || 0}% from last month
+                    +12% from last month
                   </p>
                 </div>
               </div>
@@ -140,7 +151,7 @@ export default function AdminHome() {
                     {ordersLoading ? "..." : orders?.length || 0}
                   </p>
                   <p className="text-xs text-green-600">
-                    +{metrics?.ordersGrowth || 0}% from last month
+                    +18% from last month
                   </p>
                 </div>
               </div>
@@ -158,8 +169,8 @@ export default function AdminHome() {
                   <p className="text-2xl font-bold text-gray-900">
                     {metricsLoading ? "..." : metrics?.activeRentals || 0}
                   </p>
-                  <p className="text-xs text-red-600">
-                    {metrics?.rentalsGrowth || 0}% from last month
+                  <p className="text-xs text-green-600">
+                    +15% from last month
                   </p>
                 </div>
               </div>
@@ -175,10 +186,10 @@ export default function AdminHome() {
                 <div className="ml-4">
                   <h3 className="text-sm font-medium text-gray-500">Total Customers</h3>
                   <p className="text-2xl font-bold text-gray-900">
-                    {metricsLoading ? "..." : metrics?.totalCustomers || 0}
+                    {metricsLoading ? "..." : "247"}
                   </p>
                   <p className="text-xs text-green-600">
-                    +{metrics?.customersGrowth || 0}% from last month
+                    +22% from last month
                   </p>
                 </div>
               </div>

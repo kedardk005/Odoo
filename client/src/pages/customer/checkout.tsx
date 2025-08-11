@@ -22,6 +22,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import NavigationHeader from "@/components/NavigationHeader";
 
 declare global {
   interface Window {
@@ -43,6 +44,14 @@ export default function CustomerCheckout() {
     customerEmail: "john@example.com"
   });
 
+  // Mock current user - replace with real authentication
+  const currentUser = {
+    firstName: "John",
+    lastName: "Doe", 
+    email: "john.doe@example.com",
+    profileImageUrl: undefined
+  };
+
   // Load Razorpay script
   useEffect(() => {
     const script = document.createElement("script");
@@ -50,8 +59,8 @@ export default function CustomerCheckout() {
     script.async = true;
     document.body.appendChild(script);
 
-    // Load cart items from localStorage
-    const stored = localStorage.getItem("cartItems");
+    // Load cart items from localStorage (using correct key)
+    const stored = localStorage.getItem("rentalCart");
     if (stored) {
       setCartItems(JSON.parse(stored));
     }
@@ -64,11 +73,11 @@ export default function CustomerCheckout() {
   }, []);
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((sum, item) => sum + (parseFloat(item.dailyRate) * item.quantity * getRentalDays()), 0);
+    return cartItems.reduce((sum, item) => sum + (item.total || 0), 0);
   };
 
   const calculateSecurityDeposit = () => {
-    return cartItems.reduce((sum, item) => sum + (parseFloat(item.securityDeposit || "0") * item.quantity), 0);
+    return cartItems.reduce((sum, item) => sum + (parseFloat(item.product?.securityDeposit || "0") * item.quantity), 0);
   };
 
   const calculateTotal = () => {
@@ -99,8 +108,8 @@ export default function CustomerCheckout() {
         title: "Order Placed Successfully!",
         description: "Your rental order has been confirmed. You'll receive an email confirmation shortly.",
       });
-      localStorage.removeItem("cartItems");
-      setLocation("/customer/orders");
+      localStorage.removeItem("rentalCart");
+      setLocation("/customer/home");
     },
     onError: (error: any) => {
       toast({
@@ -192,8 +201,10 @@ export default function CustomerCheckout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <NavigationHeader userType="customer" currentUser={currentUser} />
+      
+      {/* Checkout Header */}
+      <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -211,7 +222,7 @@ export default function CustomerCheckout() {
             </Badge>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -346,13 +357,13 @@ export default function CustomerCheckout() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-medium text-gray-900 truncate">
-                            {item.name}
+                            {item.product?.name || item.name}
                           </h4>
                           <p className="text-sm text-gray-500">
-                            Qty: {item.quantity} × {getRentalDays()} days
+                            Qty: {item.quantity} | {item.rentalPeriod}
                           </p>
                           <p className="text-sm font-medium text-gray-900">
-                            ₹{(parseFloat(item.dailyRate) * item.quantity * getRentalDays()).toLocaleString()}
+                            ₹{item.total.toLocaleString()}
                           </p>
                         </div>
                       </div>

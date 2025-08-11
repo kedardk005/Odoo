@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import NavigationHeader from "@/components/NavigationHeader";
 import { 
   Package, 
   Clock, 
@@ -18,6 +19,14 @@ import { api } from "@/lib/api";
 
 export default function CustomerHome() {
   const [, setLocation] = useLocation();
+
+  // Mock current user - replace with real authentication
+  const currentUser = {
+    firstName: "John",
+    lastName: "Doe", 
+    email: "john.doe@example.com",
+    profileImageUrl: undefined
+  };
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/orders", "customer"],
@@ -83,12 +92,14 @@ export default function CustomerHome() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <NavigationHeader userType="customer" currentUser={currentUser} />
+      
+      {/* Welcome Section */}
+      <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome Back!</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Welcome Back, {currentUser.firstName}!</h1>
               <p className="text-gray-600 mt-1">Manage your equipment rentals and discover new gear</p>
             </div>
             <Button onClick={() => setLocation("/customer/products")}>
@@ -97,7 +108,7 @@ export default function CustomerHome() {
             </Button>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
