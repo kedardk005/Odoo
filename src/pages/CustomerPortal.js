@@ -52,12 +52,10 @@ const CustomerPortal = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
               <Link to="/shop" className="text-xl font-bold text-black hover:text-gray-600 transition-colors">
-                🏠 Home
+                Home
               </Link>
               <nav className="hidden md:flex space-x-6">
-                <Link to="/shop" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
-                  Home
-                </Link>
+                
                 <Link to="/shop" className="px-4 py-2 bg-black text-white rounded-full font-medium">
                   Rental Shop
                 </Link>
