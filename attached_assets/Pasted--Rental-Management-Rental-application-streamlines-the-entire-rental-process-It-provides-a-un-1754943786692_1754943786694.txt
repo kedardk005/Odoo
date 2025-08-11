@@ -1,0 +1,99 @@
+** Rental Management**
+
+Rental application streamlines the entire rental process. It provides a unified platform to manage products, schedule pickups.
+
+Online booking and reservations are done through a website portal, Customers can shop available products, reserve their selected dates, and checkout right on the website.
+
+Whether you rent by the hour, week, month or year, create customized pricing for every product based on different time frames.
+
+**Roles**
+
+**Customer**
+
+End user
+
+**Core Rental Features**
+
+**1. Rental Product Management**
+
+○ Define Rentable Products: Mark products as rentable and configure units (e.g., per hour, day, week).
+Custom Rental Duration: Supports short-term and long-term rentals with flexible durations.
+Product Availability: View product availability in calendar or list view to avoid overbooking.
+
+**2. Rental Quotations & Orders**
+
+○ Create rental quotations, confirm them into rental orders, and generate rental contracts.
+Customers can review, confirm, and pay online through the customer portal.
+Pickup/Return Scheduling: Track and schedule pickup and return with precise timing.
+
+**Order and Rental Flow**
+
+○ As soon as you confirm a rental order, the system “reserves” the required items.
+This means those products are set aside and cannot be given to anyone else.
+It ensures you always have the right items ready for that customer.
+
+**3. Delivery Management**
+
+○ The system creates a pickup document telling your pickup team which items need to be delivered.
+This makes it easy to prepare and hand over the products to the customer.
+The stock records are updated to show that the items are now with the customer.
+
+**Pickup (Delivery to the Customer)**
+
+The system sends timely reminders to both customers and internal users:
+
+Customer Notifications – Automated reminders via email and/or portal alerts, sent N days before the scheduled rental return date.
+
+End User Notifications – Email notifications to the end users N days before the scheduled rental return date, allowing them to prepare for pickup or follow-up.
+
+Customizable N value for notification lead time to match business needs.
+
+**Return (Collecting Back from the Customer)**
+
+○ When the rental period ends, the system generates a return document.
+This guides your pickup team to collect the rented products from the customer.
+Once returned, the stock records are updated so the items are available for the next rental.
+
+**4. Flexible Invoicing**
+
+When the Order is Confirmed, The user can create an initial invoice.
+
+○ Full upfront payment – Charge the total rental amount before the customer picks up the goods.
+Partial payment / deposit – Take a security deposit or first installment now, and charge the rest later.
+Late Return Fees: Automatically calculate late fees based on predefined rules.
+
+**5. Pricelist Management**
+
+Integrates its Pricelist system into the rental module to offer customized and flexible pricing:
+
+○ Create different pricelists for different customer segments, regions, or rental durations.
+E.g., Corporate clients, VIP customers, or seasonal discounts.
+
+○ Set variable pricing based on rental duration.
+Example: ₹10/hour, ₹60/day, ₹300/week – automatically applied based on rental period.
+
+○ Apply percentage discounts, fixed discounts, or promotional offers to rental products.
+
+○ Define pricing rules per product category or specific customer groups.
+
+○ Set date ranges for seasonal or promotional pricelists (e.g., “Holiday Rental Rates”).
+
+**6. Returns & Delays Handling**
+
+○ Get alerts for late returns.
+Configure automatic late fees or penalties.
+
+**7. Reports and Dashboards**
+
+Tracking based on the given period:
+
+○ Most rented products
+○ Total rental revenue
+○ Top Customer
+
+Downloadable Reports
+All reports can be exported in multiple formats (PDF, XLSX, or CSV) for analysis, sharing, or record-keeping.
+
+**Mockup:** [https://link.excalidraw.com/l/65VNwvy7c4X/1C10DktExEQ](https://link.excalidraw.com/l/65VNwvy7c4X/1C10DktExEQ)
+
+[https://link.excalidraw.com/l/65VNwvy7c4X/1C10DktExEQ](https://link.excalidraw.com/l/65VNwvy7c4X/1C10DktExEQ)

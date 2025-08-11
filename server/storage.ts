@@ -1,7 +1,19 @@
-import { type User, type InsertUser, type Product, type InsertProduct, type Category, type InsertCategory, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type Delivery, type InsertDelivery, type Payment, type InsertPayment, type Notification, type InsertNotification, type OrderWithDetails, type ProductWithCategory, type DashboardMetrics } from "@shared/schema";
+import { 
+  type User, type InsertUser, type Product, type InsertProduct, type Category, type InsertCategory, 
+  type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type Delivery, type InsertDelivery, 
+  type Payment, type InsertPayment, type Notification, type InsertNotification, 
+  type Quotation, type InsertQuotation, type QuotationItem, type InsertQuotationItem,
+  type CustomerSegment, type InsertCustomerSegment, type PricingRule, type InsertPricingRule,
+  type LateFeeConfig, type InsertLateFeeConfig, type ProductReservation, type InsertProductReservation,
+  type OrderWithDetails, type ProductWithCategory, type QuotationWithDetails, type ProductWithAvailability,
+  type DashboardMetrics, type ReportData
+} from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, like, ilike, sql, gte, lte } from "drizzle-orm";
-import { users, categories, products, orders, orderItems, deliveries, payments, notifications } from "@shared/schema";
+import { eq, desc, and, like, ilike, sql, gte, lte, between, sum, count } from "drizzle-orm";
+import { 
+  users, categories, products, orders, orderItems, deliveries, payments, notifications,
+  quotations, quotationItems, customerSegments, pricingRules, lateFeeConfig, productReservations
+} from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -19,15 +31,27 @@ export interface IStorage {
   // Product operations
   getProducts(categoryId?: string): Promise<ProductWithCategory[]>;
   getProduct(id: string): Promise<ProductWithCategory | undefined>;
+  getProductWithAvailability(id: string, startDate: Date, endDate: Date): Promise<ProductWithAvailability | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product>;
   updateProductAvailability(id: string, quantity: number): Promise<Product>;
+  checkProductAvailability(productId: string, quantity: number, startDate: Date, endDate: Date): Promise<boolean>;
+
+  // Quotation operations
+  getQuotations(customerId?: string): Promise<QuotationWithDetails[]>;
+  getQuotation(id: string): Promise<QuotationWithDetails | undefined>;
+  createQuotation(quotation: InsertQuotation): Promise<Quotation>;
+  updateQuotationStatus(id: string, status: string): Promise<Quotation>;
+  createQuotationItem(quotationItem: InsertQuotationItem): Promise<QuotationItem>;
+  convertQuotationToOrder(quotationId: string): Promise<Order>;
 
   // Order operations
   getOrders(customerId?: string): Promise<OrderWithDetails[]>;
   getOrder(id: string): Promise<OrderWithDetails | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order>;
+  updateOrderPayment(id: string, paidAmount: number): Promise<Order>;
+  calculateLateFees(orderId: string): Promise<number>;
 
   // Order item operations
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
@@ -37,6 +61,8 @@ export interface IStorage {
   getDeliveries(orderId?: string): Promise<Delivery[]>;
   createDelivery(delivery: InsertDelivery): Promise<Delivery>;
   updateDeliveryStatus(id: string, status: string): Promise<Delivery>;
+  generatePickupDocument(orderId: string): Promise<any>;
+  generateReturnDocument(orderId: string): Promise<any>;
 
   // Payment operations
   getPayments(orderId?: string): Promise<Payment[]>;
@@ -47,10 +73,33 @@ export interface IStorage {
   getNotifications(userId: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationRead(id: string): Promise<Notification>;
+  sendReminderNotifications(): Promise<void>;
+
+  // Product reservation operations
+  createReservation(reservation: InsertProductReservation): Promise<ProductReservation>;
+  getReservations(productId?: string): Promise<ProductReservation[]>;
+  releaseReservation(reservationId: string): Promise<void>;
+
+  // Pricing operations
+  getCustomerSegment(customerId: string): Promise<CustomerSegment | undefined>;
+  createCustomerSegment(segment: InsertCustomerSegment): Promise<CustomerSegment>;
+  getPricingRules(productId?: string, categoryId?: string): Promise<PricingRule[]>;
+  createPricingRule(rule: InsertPricingRule): Promise<PricingRule>;
+  calculateDynamicPrice(productId: string, customerId: string, duration: number, pricingType: string): Promise<number>;
+
+  // Late fee operations
+  getLateFeeConfig(): Promise<LateFeeConfig | undefined>;
+  createLateFeeConfig(config: InsertLateFeeConfig): Promise<LateFeeConfig>;
 
   // Dashboard operations
   getDashboardMetrics(): Promise<DashboardMetrics>;
   getRecentOrders(limit?: number): Promise<OrderWithDetails[]>;
+
+  // Reports operations
+  getMostRentedProducts(startDate: Date, endDate: Date): Promise<ReportData['mostRentedProducts']>;
+  getTopCustomers(startDate: Date, endDate: Date): Promise<ReportData['topCustomers']>;
+  getRevenueByPeriod(startDate: Date, endDate: Date, groupBy: 'day' | 'week' | 'month'): Promise<ReportData['revenueByPeriod']>;
+  exportReport(type: 'pdf' | 'xlsx' | 'csv', data: any): Promise<Buffer>;
 }
 
 export class MemStorage implements IStorage {
@@ -62,6 +111,12 @@ export class MemStorage implements IStorage {
   private deliveries: Map<string, Delivery> = new Map();
   private payments: Map<string, Payment> = new Map();
   private notifications: Map<string, Notification> = new Map();
+  private quotations: Map<string, Quotation> = new Map();
+  private quotationItems: Map<string, QuotationItem> = new Map();
+  private customerSegments: Map<string, CustomerSegment> = new Map();
+  private pricingRules: Map<string, PricingRule> = new Map();
+  private lateFeeConfigs: Map<string, LateFeeConfig> = new Map();
+  private productReservations: Map<string, ProductReservation> = new Map();
 
   constructor() {
     this.seedData();
@@ -349,6 +404,30 @@ export class MemStorage implements IStorage {
     };
 
     this.users.set(adminUser.id, adminUser);
+
+    // Create default late fee configuration
+    const defaultLateFeeConfig: LateFeeConfig = {
+      id: randomUUID(),
+      name: "Default Late Fee",
+      dailyFeePercentage: "5.00",
+      maxFeePercentage: "50.00",
+      gracePeriodHours: 24,
+      isActive: true,
+      createdAt: new Date(),
+    };
+    this.lateFeeConfigs.set(defaultLateFeeConfig.id, defaultLateFeeConfig);
+
+    // Create sample customer segments  
+    const adminSegment: CustomerSegment = {
+      id: randomUUID(),
+      customerId: adminUser.id,
+      segment: "vip",
+      discountPercentage: "10.00",
+      validFrom: new Date(),
+      validUntil: null,
+      createdAt: new Date(),
+    };
+    this.customerSegments.set(adminSegment.id, adminSegment);
   }
 
   async getUser(id: string): Promise<User | undefined> {

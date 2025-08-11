@@ -5,11 +5,14 @@ import { z } from "zod";
 
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["customer", "admin", "staff"]);
-export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "delivered", "returned", "cancelled"]);
+export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "delivered", "returned", "cancelled", "overdue"]);
 export const deliveryStatusEnum = pgEnum("delivery_status", ["scheduled", "in_transit", "delivered", "completed"]);
 export const deliveryTypeEnum = pgEnum("delivery_type", ["pickup", "return"]);
-export const productStatusEnum = pgEnum("product_status", ["available", "rented", "maintenance"]);
-export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "overdue", "refunded"]);
+export const productStatusEnum = pgEnum("product_status", ["available", "rented", "maintenance", "reserved"]);
+export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "overdue", "refunded", "partial"]);
+export const quotationStatusEnum = pgEnum("quotation_status", ["draft", "sent", "approved", "rejected", "expired"]);
+export const pricingTypeEnum = pgEnum("pricing_type", ["hourly", "daily", "weekly", "monthly"]);
+export const customerSegmentEnum = pgEnum("customer_segment", ["standard", "vip", "corporate", "seasonal"]);
 
 // Users table
 export const users = pgTable("users", {
@@ -39,15 +42,34 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   categoryId: varchar("category_id").references(() => categories.id),
+  hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }),
   dailyRate: decimal("daily_rate", { precision: 10, scale: 2 }).notNull(),
   weeklyRate: decimal("weekly_rate", { precision: 10, scale: 2 }),
   monthlyRate: decimal("monthly_rate", { precision: 10, scale: 2 }),
   securityDeposit: decimal("security_deposit", { precision: 10, scale: 2 }).notNull(),
   quantity: integer("quantity").notNull().default(1),
   availableQuantity: integer("available_quantity").notNull().default(1),
+  reservedQuantity: integer("reserved_quantity").notNull().default(0),
   status: productStatusEnum("status").default("available").notNull(),
   imageUrl: text("image_url"),
   specifications: text("specifications"),
+  minRentalPeriod: integer("min_rental_period").default(1), // in hours
+  maxRentalPeriod: integer("max_rental_period").default(720), // in hours (30 days)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Quotations table
+export const quotations = pgTable("quotations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quotationNumber: text("quotation_number").notNull().unique(),
+  customerId: varchar("customer_id").references(() => users.id).notNull(),
+  status: quotationStatusEnum("status").default("draft").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  securityDeposit: decimal("security_deposit", { precision: 10, scale: 2 }).notNull(),
+  validUntil: timestamp("valid_until").notNull(),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -56,12 +78,20 @@ export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   orderNumber: text("order_number").notNull().unique(),
   customerId: varchar("customer_id").references(() => users.id).notNull(),
+  quotationId: varchar("quotation_id").references(() => quotations.id),
   status: orderStatusEnum("status").default("pending").notNull(),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
+  pickupTime: text("pickup_time"),
+  returnTime: text("return_time"),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   securityDeposit: decimal("security_deposit", { precision: 10, scale: 2 }).notNull(),
+  paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  remainingAmount: decimal("remaining_amount", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  lateFee: decimal("late_fee", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  actualReturnDate: timestamp("actual_return_date"),
   notes: text("notes"),
+  contractGenerated: boolean("contract_generated").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -114,6 +144,67 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Quotation items table
+export const quotationItems = pgTable("quotation_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quotationId: varchar("quotation_id").references(() => quotations.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").notNull(),
+  rate: decimal("rate", { precision: 10, scale: 2 }).notNull(),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  pricingType: pricingTypeEnum("pricing_type").notNull(),
+});
+
+// Customer segments and pricing rules
+export const customerSegments = pgTable("customer_segments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => users.id).notNull(),
+  segment: customerSegmentEnum("segment").notNull(),
+  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).default("0.00"),
+  validFrom: timestamp("valid_from").defaultNow().notNull(),
+  validUntil: timestamp("valid_until"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Pricing rules table
+export const pricingRules = pgTable("pricing_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  categoryId: varchar("category_id").references(() => categories.id),
+  productId: varchar("product_id").references(() => products.id),
+  customerSegment: customerSegmentEnum("customer_segment"),
+  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).default("0.00"),
+  fixedDiscount: decimal("fixed_discount", { precision: 10, scale: 2 }).default("0.00"),
+  validFrom: timestamp("valid_from").defaultNow().notNull(),
+  validUntil: timestamp("valid_until"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Late fee configurations
+export const lateFeeConfig = pgTable("late_fee_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  dailyFeePercentage: decimal("daily_fee_percentage", { precision: 5, scale: 2 }).default("5.00"),
+  maxFeePercentage: decimal("max_fee_percentage", { precision: 5, scale: 2 }).default("50.00"),
+  gracePeriodHours: integer("grace_period_hours").default(24),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Product reservations for availability tracking
+export const productReservations = pgTable("product_reservations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  orderId: varchar("order_id").references(() => orders.id),
+  quotationId: varchar("quotation_id").references(() => quotations.id),
+  quantity: integer("quantity").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: text("status").default("active").notNull(), // active, released, expired
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -156,6 +247,36 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertQuotationSchema = createInsertSchema(quotations).omit({
+  id: true,
+  quotationNumber: true,
+  createdAt: true,
+});
+
+export const insertQuotationItemSchema = createInsertSchema(quotationItems).omit({
+  id: true,
+});
+
+export const insertCustomerSegmentSchema = createInsertSchema(customerSegments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPricingRuleSchema = createInsertSchema(pricingRules).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLateFeeConfigSchema = createInsertSchema(lateFeeConfig).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertProductReservationSchema = createInsertSchema(productReservations).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -181,6 +302,24 @@ export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
+export type Quotation = typeof quotations.$inferSelect;
+export type InsertQuotation = z.infer<typeof insertQuotationSchema>;
+
+export type QuotationItem = typeof quotationItems.$inferSelect;
+export type InsertQuotationItem = z.infer<typeof insertQuotationItemSchema>;
+
+export type CustomerSegment = typeof customerSegments.$inferSelect;
+export type InsertCustomerSegment = z.infer<typeof insertCustomerSegmentSchema>;
+
+export type PricingRule = typeof pricingRules.$inferSelect;
+export type InsertPricingRule = z.infer<typeof insertPricingRuleSchema>;
+
+export type LateFeeConfig = typeof lateFeeConfig.$inferSelect;
+export type InsertLateFeeConfig = z.infer<typeof insertLateFeeConfigSchema>;
+
+export type ProductReservation = typeof productReservations.$inferSelect;
+export type InsertProductReservation = z.infer<typeof insertProductReservationSchema>;
+
 // Extended types for frontend
 export type OrderWithDetails = Order & {
   customer: User;
@@ -193,9 +332,45 @@ export type ProductWithCategory = Product & {
   category: Category | null;
 };
 
+// Extended types for frontend
+export type QuotationWithDetails = Quotation & {
+  customer: User;
+  items: (QuotationItem & { product: Product })[];
+};
+
+export type OrderWithReservations = OrderWithDetails & {
+  reservations: ProductReservation[];
+};
+
+export type ProductWithAvailability = ProductWithCategory & {
+  isAvailable: boolean;
+  nextAvailableDate?: Date;
+  reservations: ProductReservation[];
+};
+
 export type DashboardMetrics = {
   totalRevenue: number;
   activeRentals: number;
   newCustomers: number;
   inventoryUtilization: number;
+  overdueOrders: number;
+  pendingQuotations: number;
+};
+
+export type ReportData = {
+  mostRentedProducts: Array<{
+    product: Product;
+    totalRentals: number;
+    revenue: number;
+  }>;
+  topCustomers: Array<{
+    customer: User;
+    totalOrders: number;
+    totalRevenue: number;
+  }>;
+  revenueByPeriod: Array<{
+    period: string;
+    revenue: number;
+    orders: number;
+  }>;
 };

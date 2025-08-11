@@ -24,6 +24,10 @@ import CustomerProducts from "@/pages/customer/products";
 import CustomerCart from "@/pages/customer/cart";
 import CustomerCheckout from "@/pages/customer/checkout";
 
+// New Admin Pages
+import AdminQuotations from "@/pages/admin/quotations";
+import AdminPricing from "@/pages/admin/pricing";
+
 function Router() {
   return (
     <Switch>
@@ -37,6 +41,8 @@ function Router() {
       <Route path="/admin/products" component={Products} />
       <Route path="/admin/orders" component={Orders} />
       <Route path="/admin/customers" component={Customers} />
+      <Route path="/admin/quotations" component={AdminQuotations} />
+      <Route path="/admin/pricing" component={AdminPricing} />
       <Route path="/admin/booking" component={Booking} />
       <Route path="/admin/checkout" component={Checkout} />
       
