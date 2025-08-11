@@ -44,21 +44,15 @@ const Cart = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
-              <Link to="/shop" className="text-xl font-bold text-black hover:text-gray-600 transition-colors">
-                🏠 Home
-              </Link>
+              <div className="text-xl font-bold text-black">
+                Rental Management System
+              </div>
               <nav className="hidden md:flex space-x-6">
                 <Link to="/shop" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
-                  Home
-                </Link>
-                <Link to="/shop" className="px-4 py-2 bg-black text-white rounded-full font-medium">
                   Rental Shop
                 </Link>
                 <Link to="/shop/wishlist" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
                   Wishlist
-                </Link>
-                <Link to="/shop/contact" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
-                  Contact us
                 </Link>
               </nav>
             </div>
@@ -68,14 +62,8 @@ const Cart = () => {
                 <button className="flex items-center space-x-2 bg-gray-100 text-black px-3 py-2 rounded-full hover:bg-gray-200 transition-all duration-200">
                   <User className="h-5 w-5" />
                   <span className="text-sm font-medium">admin</span>
-                  <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">📋</span>
-                  </div>
                 </button>
               </div>
-              <Link to="/shop/contact" className="text-black hover:text-gray-600 transition-colors">
-                <MessageCircle className="h-6 w-6" />
-              </Link>
             </div>
           </div>
         </div>
@@ -185,14 +173,14 @@ const Cart = () => {
                     placeholder="Coupon Code"
                     className="flex-1 px-4 py-3 focus:outline-none bg-gray-50"
                   />
-                  <button className="bg-black text-white px-6 py-3 hover:bg-gray-800 transition-colors font-medium">
+                  <button className="bg-black text-white px-6 py-3 hover:bg-gray-700 transition-colors font-medium">
                     Apply
                   </button>
                 </div>
               </div>
 
               <Link to="/shop/checkout">
-                <button className="w-full bg-black text-white py-4 rounded-lg hover:bg-gray-800 transition-all duration-200 font-bold text-lg shadow-md hover:shadow-lg transform hover:scale-105">
+                <button className="w-full bg-black text-white py-4 rounded-lg hover:bg-gray-700 transition-all duration-200 font-bold text-lg shadow-sm">
                   Proceed to checkout
                 </button>
               </Link>
