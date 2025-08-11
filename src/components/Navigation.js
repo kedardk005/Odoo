@@ -6,10 +6,10 @@ const Navigation = () => {
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: Home },
     { name: 'Rental', path: '/rental', icon: Package },
-    { name: 'Order', path: '/rental', icon: FileText },
+    { name: 'Order', path: '/orders', icon: FileText },
     { name: 'Products', path: '/products', icon: ShoppingBag },
-    { name: 'Reporting', path: '/transfer', icon: BarChart3 },
-    { name: 'Setting', path: '/transfer', icon: Settings },
+    { name: 'Reporting', path: '/reporting', icon: BarChart3 },
+    { name: 'Setting', path: '/settings', icon: Settings },
   ];
 
   return (
