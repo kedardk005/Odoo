@@ -9,6 +9,7 @@ import Products from './pages/Products';
 import Reporting from './pages/Reporting';
 import Settings from './pages/Settings';
 import Transfer from './pages/Transfer';
+import Profile from './pages/Profile';
 import CustomerPortal from './pages/CustomerPortal';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
@@ -30,6 +31,7 @@ function App() {
             <Route path="reporting" element={<Reporting />} />
             <Route path="settings" element={<Settings />} />
             <Route path="transfer" element={<Transfer />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
           
           {/* Customer Portal Routes */}
