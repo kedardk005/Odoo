@@ -1,46 +1,61 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { NavigationHeader } from "@/components/navigation-header";
-import { OrderStatus } from "@/components/orders/order-status";
+import NavigationHeader from "@/components/NavigationHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Eye, Edit, Plus, Download, Calendar } from "lucide-react";
+import { Search, Filter, Eye, Edit, Plus, Download, Calendar, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
+import { format } from "date-fns";
 
 export default function Orders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
 
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders = [], isLoading } = useQuery({
     queryKey: ["/api/orders"],
-    queryFn: () => api.getOrders(),
   });
 
-  const filteredOrders = orders?.filter((order) => {
-    const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         `${order.customer.firstName} ${order.customer.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredOrders = orders.filter((order: any) => {
+    const matchesSearch = order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     
     return matchesSearch && matchesStatus;
-  }) || [];
+  });
 
-  const formatCurrency = (amount: string) => {
-    return `₹${parseFloat(amount).toLocaleString()}`;
+  const formatCurrency = (amount: string | number) => {
+    return `₹${parseFloat(amount.toString()).toLocaleString()}`;
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString();
+    return format(new Date(date), "MMM d, yyyy");
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'delivered':
+        return 'default';
+      case 'returned':
+        return 'outline';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavigationHeader />
+      <NavigationHeader userType="admin" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -120,7 +135,14 @@ export default function Orders() {
               </Badge>
             )}
           </div>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setSearchTerm("");
+              setStatusFilter("all");
+            }}
+          >
             Clear Filters
           </Button>
         </div>
@@ -131,12 +153,12 @@ export default function Orders() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order Number</TableHead>
+                  <TableHead>Order</TableHead>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Rental Period</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -154,40 +176,41 @@ export default function Orders() {
                     </TableRow>
                   ))
                 ) : filteredOrders.length > 0 ? (
-                  filteredOrders.map((order) => (
+                  filteredOrders.map((order: any) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.orderNumber}</TableCell>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">
-                            {order.customer.firstName} {order.customer.lastName}
-                          </div>
-                          <div className="text-sm text-gray-500">{order.customer.email}</div>
+                        <div className="font-medium">{order.orderNumber}</div>
+                        <div className="text-sm text-gray-500">ID: {order.id.slice(0, 8)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{order.customerName}</div>
+                        <div className="text-sm text-gray-500">{order.customerEmail}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-1">
+                          <Package className="w-4 h-4 text-gray-400" />
+                          <span>{order.items?.length || 0} items</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <OrderStatus status={order.status} />
+                        <div className="font-medium">{formatCurrency(order.totalAmount)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusVariant(order.status)}>
+                          {order.status}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div>{formatDate(order.startDate.toString())} - {formatDate(order.endDate.toString())}</div>
-                          <div className="text-gray-500">
-                            {Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
-                          </div>
+                          {order.createdAt ? formatDate(order.createdAt) : 'N/A'}
                         </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(order.totalAmount)}
-                      </TableCell>
-                      <TableCell className="text-gray-500">
-                        {formatDate(order.createdAt.toString())}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="outline" size="sm">
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="outline" size="sm">
                             <Edit className="w-4 h-4" />
                           </Button>
                         </div>
@@ -196,8 +219,18 @@ export default function Orders() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <div className="text-gray-500">No orders found</div>
+                    <TableCell colSpan={7} className="text-center py-12">
+                      <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders found</h3>
+                      <p className="text-gray-600 mb-4">
+                        {searchTerm || statusFilter !== "all"
+                          ? "Try adjusting your filters"
+                          : "No orders have been placed yet"}
+                      </p>
+                      <Button>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create New Order
+                      </Button>
                     </TableCell>
                   </TableRow>
                 )}
