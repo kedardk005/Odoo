@@ -127,7 +127,7 @@ const Dashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {topProducts.map((item, index) => (
-                  <tr key={index}>
+                  <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.product}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
