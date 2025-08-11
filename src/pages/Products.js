@@ -9,7 +9,10 @@ const Products = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Products</h1>
         <div className="flex items-center space-x-4">
-          <button className="btn-primary flex items-center space-x-2">
+          <button
+            onClick={() => alert('Create New Product - This would open a form to create a new product')}
+            className="btn-primary flex items-center space-x-2"
+          >
             <Plus size={16} />
             <span>Create</span>
           </button>
@@ -102,7 +105,7 @@ const Products = () => {
                     <tr className="border-t border-gray-200">
                       <td className="py-3">Weekly</td>
                       <td className="py-3">Standard</td>
-                      <td className="py-3">��600</td>
+                      <td className="py-3">₹600</td>
                     </tr>
                     <tr className="border-t border-gray-200">
                       <td className="py-3">Monthly</td>
