@@ -30,7 +30,7 @@ const Header = () => {
     <header className="bg-white border-b border-gray-200 px-4 py-3 shadow-md">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <h1 className="text-xl font-semibold text-gray-900 hover:text-primary-600 transition-colors duration-200 cursor-pointer">Rental Management System</h1>
+          <h1 className="text-xl font-semibold text-black hover:text-gray-600 transition-colors duration-200 cursor-pointer">Rental Management System</h1>
         </div>
         
         <div className="relative" ref={dropdownRef}>
@@ -48,13 +48,13 @@ const Header = () => {
               <div className="py-1">
                 <button
                   onClick={() => handleNavigation('/profile')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-all duration-150 hover:pl-6"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-black transition-all duration-150 hover:pl-6"
                 >
                   My Profile
                 </button>
                 <button
                   onClick={() => handleNavigation('/settings')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-all duration-150 hover:pl-6"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-black transition-all duration-150 hover:pl-6"
                 >
                   Settings
                 </button>
@@ -65,7 +65,7 @@ const Header = () => {
                     console.log('Logout clicked');
                     setShowUserMenu(false);
                   }}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-all duration-150 hover:pl-6"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-black transition-all duration-150 hover:pl-6"
                 >
                   Logout
                 </button>
