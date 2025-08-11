@@ -31,9 +31,9 @@ export default function Landing() {
     e.preventDefault();
     
     if (loginData.role === "admin") {
-      setLocation("/admin/dashboard");
+      setLocation("/admin/home");
     } else {
-      setLocation("/customer/products");
+      setLocation("/customer/home");
     }
   };
 

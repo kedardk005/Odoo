@@ -375,17 +375,17 @@ export default function CustomerCheckout() {
                           </div>
                           <p>Duration: {getDuration(item.startDate, item.endDate)}</p>
                           <p>Quantity: {item.quantity}</p>
-                          <p>Rate: ₹{item.rate.toFixed(2)} ({item.pricingType})</p>
+                          <p>Rate: ₹{(item.rate || 0).toFixed(2)} ({item.pricingType})</p>
                         </div>
                         
                         <div className="mt-2 space-y-1">
                           <div className="flex justify-between text-sm">
                             <span>Rental Amount:</span>
-                            <span>₹{item.totalAmount.toFixed(2)}</span>
+                            <span>₹{(item.totalAmount || 0).toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span>Security Deposit:</span>
-                            <span>₹{(item.securityDeposit * item.quantity).toFixed(2)}</span>
+                            <span>₹{((item.securityDeposit || 0) * item.quantity).toFixed(2)}</span>
                           </div>
                         </div>
                       </div>

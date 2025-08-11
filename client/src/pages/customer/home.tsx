@@ -1,323 +1,297 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import NavigationHeader from "@/components/NavigationHeader";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Package, 
-  Clock, 
-  CreditCard, 
-  Bell, 
+  ShoppingCart, 
+  FileText, 
   Calendar,
-  ShoppingBag,
-  TrendingUp,
-  MapPin,
-  Star
+  Star,
+  Plus,
+  Eye,
+  Clock
 } from "lucide-react";
 import { useLocation } from "wouter";
-import { api } from "@/lib/api";
+import { format } from "date-fns";
+import NavigationHeader from "@/components/NavigationHeader";
 
 export default function CustomerHome() {
   const [, setLocation] = useLocation();
 
-  // Mock current user - replace with real authentication
-  const currentUser = {
+  // Mock customer data - in real app, get from auth context
+  const customer = {
     firstName: "John",
-    lastName: "Doe", 
-    email: "john.doe@example.com",
-    profileImageUrl: undefined
+    lastName: "Doe",
+    email: "john.doe@example.com"
   };
 
-  const { data: orders, isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/orders", "customer"],
-    queryFn: () => api.getOrders(),
+  const { data: recentOrders = [] } = useQuery({
+    queryKey: ["/api/orders/customer/customer-temp-id"],
   });
 
-  const { data: notifications } = useQuery({
-    queryKey: ["/api/notifications", "customer"],
-    queryFn: () => api.getNotifications("customer-id"),
+  const { data: featuredProducts = [] } = useQuery({
+    queryKey: ["/api/products"],
   });
-
-  const activeRentals = orders?.filter(order => 
-    order.status === "confirmed" || order.status === "delivered"
-  ) || [];
-
-  const recentOrders = orders?.slice(0, 5) || [];
-
-  const totalSpent = orders?.reduce((sum, order) => 
-    sum + parseFloat(order.totalAmount || "0"), 0
-  ) || 0;
 
   const quickActions = [
     {
-      icon: Package,
-      label: "Browse Equipment",
+      title: "Browse Equipment",
       description: "Explore our rental catalog",
+      icon: Package,
       action: () => setLocation("/customer/products"),
       color: "bg-blue-500"
     },
     {
-      icon: ShoppingBag,
-      label: "View Cart",
-      description: "Check your selected items",
-      action: () => setLocation("/customer/cart"),
+      title: "Request Quote",
+      description: "Get custom pricing",
+      icon: FileText,
+      action: () => setLocation("/customer/quotation"),
       color: "bg-green-500"
     },
     {
-      icon: Calendar,
-      label: "My Orders",
-      description: "Track your rental history",
-      action: () => setLocation("/customer/orders"),
+      title: "View Cart",
+      description: "Review selected items",
+      icon: ShoppingCart,
+      action: () => setLocation("/customer/cart"),
       color: "bg-purple-500"
-    },
-    {
-      icon: Bell,
-      label: "Notifications",
-      description: "View updates and alerts",
-      action: () => setLocation("/customer/notifications"),
-      color: "bg-orange-500"
     }
   ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed": return "bg-blue-100 text-blue-800";
-      case "delivered": return "bg-green-100 text-green-800";
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      case "returned": return "bg-gray-100 text-gray-800";
-      case "cancelled": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'confirmed':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'delivered':
+        return 'default';
+      case 'returned':
+        return 'outline';
+      default:
+        return 'secondary';
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavigationHeader userType="customer" currentUser={currentUser} />
+      <NavigationHeader userType="customer" />
       
-      {/* Welcome Section */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome Back, {currentUser.firstName}!</h1>
-              <p className="text-gray-600 mt-1">Manage your equipment rentals and discover new gear</p>
-            </div>
-            <Button onClick={() => setLocation("/customer/products")}>
-              <Package className="w-4 h-4 mr-2" />
-              Browse Equipment
-            </Button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {customer.firstName}!
+          </h1>
+          <p className="text-gray-600 mt-2">Manage your equipment rentals and explore new products</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {quickActions.map((action, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className="h-auto p-4 flex flex-col items-center space-y-2"
+                      onClick={action.action}
+                    >
+                      <div className={`p-3 rounded-full ${action.color} text-white`}>
+                        <action.icon className="w-6 h-6" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold">{action.title}</p>
+                        <p className="text-sm text-gray-600">{action.description}</p>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Orders */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Recent Rentals</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentOrders && recentOrders.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentOrders.slice(0, 5).map((order: any) => (
+                      <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Package className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{order.orderNumber}</p>
+                            <p className="text-sm text-gray-600">
+                              {order.items?.length || 0} item(s) • ₹{order.totalAmount}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {order.startDate && format(new Date(order.startDate), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Badge variant={getStatusColor(order.status)}>
+                            {order.status}
+                          </Badge>
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No rentals yet</h3>
+                    <p className="text-gray-600 mb-4">Start by exploring our equipment catalog</p>
+                    <Button onClick={() => setLocation("/customer/products")}>
+                      Browse Equipment
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Featured Products */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Featured Equipment</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {featuredProducts && featuredProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {featuredProducts.slice(0, 4).map((product: any) => (
+                      <div key={product.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                           onClick={() => setLocation(`/customer/products/${product.id}`)}>
+                        <div className="aspect-square bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                          {product.imageUrl ? (
+                            <img
+                              src={product.imageUrl}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-semibold text-sm mb-1">{product.name}</h4>
+                        <p className="text-sm text-gray-600 mb-2">₹{product.dailyRate}/day</p>
+                        <Badge variant={product.status === 'available' ? 'default' : 'secondary'} className="text-xs">
+                          {product.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">Loading featured products...</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Account Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Active Rentals</span>
+                  <span className="font-semibold">
+                    {recentOrders?.filter((order: any) => order.status === 'delivered').length || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total Orders</span>
+                  <span className="font-semibold">{recentOrders?.length || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Member Since</span>
+                  <span className="font-semibold">Jan 2025</span>
+                </div>
+                <div className="pt-2 border-t">
+                  <div className="flex items-center space-x-2">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm font-medium">Valued Customer</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Rentals */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Calendar className="w-5 h-5" />
+                  <span>Upcoming</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentOrders?.filter((order: any) => 
+                  order.status === 'confirmed' || order.status === 'pending'
+                ).length > 0 ? (
+                  <div className="space-y-3">
+                    {recentOrders
+                      .filter((order: any) => order.status === 'confirmed' || order.status === 'pending')
+                      .slice(0, 3)
+                      .map((order: any) => (
+                        <div key={order.id} className="p-3 bg-blue-50 rounded-lg">
+                          <p className="font-medium text-sm">{order.orderNumber}</p>
+                          <p className="text-xs text-gray-600">
+                            {order.startDate && format(new Date(order.startDate), "MMM d")}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No upcoming rentals</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Support */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Need Help?</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button variant="outline" className="w-full justify-start">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Contact Support
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Package className="w-4 h-4 mr-2" />
+                  Equipment Guide
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Star className="w-4 h-4 mr-2" />
+                  Leave Review
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Package className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-gray-500">Active Rentals</h3>
-                  <p className="text-2xl font-bold text-gray-900">{activeRentals.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <CreditCard className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-gray-500">Total Spent</h3>
-                  <p className="text-2xl font-bold text-gray-900">₹{totalSpent.toLocaleString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-gray-500">Total Orders</h3>
-                  <p className="text-2xl font-bold text-gray-900">{orders?.length || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Star className="w-5 h-5 mr-2" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickActions.map((action, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="h-auto p-4 flex flex-col items-center space-y-2"
-                  onClick={action.action}
-                >
-                  <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                    <action.icon className="h-6 w-6" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-medium">{action.label}</p>
-                    <p className="text-sm text-gray-500">{action.description}</p>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Active Rentals */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center">
-                <Clock className="w-5 h-5 mr-2" />
-                Active Rentals
-              </CardTitle>
-              {activeRentals.length > 0 && (
-                <Button variant="outline" size="sm" onClick={() => setLocation("/customer/orders")}>
-                  View All
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {activeRentals.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No active rentals</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Start browsing our equipment catalog to place your first order.
-                  </p>
-                  <Button className="mt-4" onClick={() => setLocation("/customer/products")}>
-                    Browse Equipment
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {activeRentals.map((rental) => (
-                    <div key={rental.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">Order #{rental.orderNumber}</h4>
-                        <Badge className={getStatusColor(rental.status)}>
-                          {rental.status}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(rental.startDate).toLocaleDateString()} - {new Date(rental.endDate).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center">
-                          <CreditCard className="w-4 h-4 mr-1" />
-                          ₹{parseFloat(rental.totalAmount).toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recent Orders */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center">
-                <ShoppingBag className="w-5 h-5 mr-2" />
-                Recent Orders
-              </CardTitle>
-              {recentOrders.length > 0 && (
-                <Button variant="outline" size="sm" onClick={() => setLocation("/customer/orders")}>
-                  View All
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {ordersLoading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : recentOrders.length === 0 ? (
-                <div className="text-center py-8">
-                  <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No orders yet</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Your order history will appear here once you make your first rental.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentOrders.map((order) => (
-                    <div key={order.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">#{order.orderNumber}</h4>
-                        <Badge className={getStatusColor(order.status)}>
-                          {order.status}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <p>{new Date(order.createdAt).toLocaleDateString()}</p>
-                        <p className="font-medium">₹{parseFloat(order.totalAmount).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Notifications */}
-        {notifications && notifications.length > 0 && (
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bell className="w-5 h-5 mr-2" />
-                Recent Notifications
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {notifications.slice(0, 3).map((notification) => (
-                  <div key={notification.id} className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                    <Bell className="w-4 h-4 text-blue-600 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">{notification.message}</p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(notification.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

@@ -38,6 +38,7 @@ function Router() {
       <Route path="/signup" component={Signup} />
       
       {/* Admin Routes */}
+      <Route path="/admin" component={AdminHome} />
       <Route path="/admin/home" component={AdminHome} />
       <Route path="/admin/dashboard" component={Dashboard} />
       <Route path="/admin/products" component={Products} />
