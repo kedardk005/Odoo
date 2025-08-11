@@ -16,7 +16,12 @@ const Products = () => {
             <Plus size={16} />
             <span>Create</span>
           </button>
-          <button className="btn-secondary">Update Stock</button>
+          <button
+            onClick={() => alert('Update Stock - This would open a dialog to update product stock levels')}
+            className="btn-secondary"
+          >
+            Update Stock
+          </button>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">1/50</span>
           </div>
