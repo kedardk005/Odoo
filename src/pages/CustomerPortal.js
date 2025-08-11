@@ -26,20 +26,32 @@ const CustomerPortal = () => {
   const priceRanges = ['₹0 - ₹50', '₹50 - ₹100', '₹100 - ₹200', '₹200+'];
 
   const ProductCard = ({ product }) => (
-    <div className="bg-white border border-gray-300 rounded-lg p-4 hover:shadow-lg hover:border-gray-500 transition-all duration-300 transform hover:-translate-y-1">
-      <Link to={`/shop/product/${product.id}`}>
-        <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
-          <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shadow-sm">
-            <div className="w-10 h-8 bg-gray-300 rounded flex items-center justify-center">
+    <div className={`bg-white border border-gray-300 rounded-lg p-4 hover:shadow-md hover:border-gray-500 transition-all duration-200 ${
+      viewMode === 'list' ? 'flex items-center space-x-4' : ''
+    }`}>
+      <Link to={`/shop/product/${product.id}`} className={viewMode === 'list' ? 'flex items-center space-x-4 flex-1' : ''}>
+        <div className={`bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden ${
+          viewMode === 'list' ? 'w-16 h-16 flex-shrink-0' : 'aspect-square mb-3'
+        }`}>
+          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
+            <div className="w-8 h-6 bg-gray-300 rounded flex items-center justify-center">
               <span className="text-gray-500 text-xs font-medium">IMG</span>
             </div>
           </div>
         </div>
-        <h3 className="font-medium text-gray-900 mb-1 text-center">{product.name}</h3>
-        <p className="text-lg font-bold text-gray-900 text-center mb-3">₹{product.price}</p>
+        <div className={viewMode === 'list' ? 'flex-1' : ''}>
+          <h3 className={`font-medium text-gray-900 mb-1 ${
+            viewMode === 'list' ? 'text-left' : 'text-center'
+          }`}>{product.name}</h3>
+          <p className={`text-lg font-bold text-gray-900 ${
+            viewMode === 'list' ? 'text-left mb-0' : 'text-center mb-3'
+          }`}>₹{product.price}</p>
+        </div>
       </Link>
-      <button className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition-all duration-200 text-sm font-medium shadow-md hover:shadow-lg transform hover:scale-105">
-        Add to cart ⊕
+      <button className={`bg-black text-white py-2 rounded-lg hover:bg-gray-700 transition-all duration-200 text-sm font-medium shadow-sm ${
+        viewMode === 'list' ? 'px-4 flex-shrink-0' : 'w-full'
+      }`}>
+        Add to cart
       </button>
     </div>
   );
@@ -51,19 +63,15 @@ const CustomerPortal = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
-              <Link to="/shop" className="text-xl font-bold text-black hover:text-gray-600 transition-colors">
-                Home
-              </Link>
+              <div className="text-xl font-bold text-black">
+                Rental Management System
+              </div>
               <nav className="hidden md:flex space-x-6">
-                
                 <Link to="/shop" className="px-4 py-2 bg-black text-white rounded-full font-medium">
                   Rental Shop
                 </Link>
                 <Link to="/shop/wishlist" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
                   Wishlist
-                </Link>
-                <Link to="/shop/contact" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
-                  Contact us
                 </Link>
               </nav>
             </div>
@@ -73,17 +81,11 @@ const CustomerPortal = () => {
                 <button className="flex items-center space-x-2 bg-gray-100 text-black px-3 py-2 rounded-full hover:bg-gray-200 transition-all duration-200">
                   <User className="h-5 w-5" />
                   <span className="text-sm font-medium">admin</span>
-                  <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">📋</span>
-                  </div>
                 </button>
               </div>
-              <Link to="/shop/contact" className="text-black hover:text-gray-600 transition-colors">
-                <MessageCircle className="h-6 w-6" />
-              </Link>
-              <Link to="/shop/cart" className="relative bg-black text-white p-2 rounded-full hover:bg-gray-800 transition-all duration-200 shadow-md hover:shadow-lg">
+              <Link to="/shop/cart" className="relative bg-black text-white p-2 rounded-full hover:bg-gray-700 transition-all duration-200 shadow-sm">
                 <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">2</span>
+                <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">2</span>
               </Link>
             </div>
           </div>
@@ -211,8 +213,11 @@ const CustomerPortal = () => {
               </div>
             </div>
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Products Grid/List */}
+            <div className={viewMode === 'grid'
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+              : "space-y-4"
+            }>
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
