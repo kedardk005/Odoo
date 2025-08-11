@@ -20,26 +20,26 @@ const ProductDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b-2 border-gray-200 shadow-sm">
+      <header className="bg-white border-b border-gray-300 shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
-              <Link to="/shop" className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+              <Link to="/shop" className="text-xl font-bold text-black hover:text-gray-600 transition-colors">
                 🏠 Home
               </Link>
               <nav className="hidden md:flex space-x-6">
-                <Link to="/shop" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                <Link to="/shop" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
                   Home
                 </Link>
-                <Link to="/shop" className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-medium">
+                <Link to="/shop" className="px-4 py-2 bg-black text-white rounded-full font-medium">
                   Rental Shop
                 </Link>
-                <Link to="/shop/wishlist" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                <Link to="/shop/wishlist" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
                   Wishlist
                 </Link>
-                <Link to="/shop/contact" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                <Link to="/shop/contact" className="px-4 py-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-full transition-all duration-200 font-medium">
                   Contact us
                 </Link>
               </nav>
@@ -47,18 +47,18 @@ const ProductDetail = () => {
             
             <div className="flex items-center space-x-4">
               <div className="relative group">
-                <button className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-3 py-2 rounded-full hover:bg-blue-200 transition-all duration-200">
+                <button className="flex items-center space-x-2 bg-gray-100 text-black px-3 py-2 rounded-full hover:bg-gray-200 transition-all duration-200">
                   <User className="h-5 w-5" />
                   <span className="text-sm font-medium">admin</span>
-                  <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center">
                     <span className="text-white text-xs">📋</span>
                   </div>
                 </button>
               </div>
-              <Link to="/shop/contact" className="text-blue-600 hover:text-blue-800 transition-colors">
+              <Link to="/shop/contact" className="text-black hover:text-gray-600 transition-colors">
                 <MessageCircle className="h-6 w-6" />
               </Link>
-              <Link to="/shop/cart" className="relative bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg">
+              <Link to="/shop/cart" className="relative bg-black text-white p-2 rounded-full hover:bg-gray-800 transition-all duration-200 shadow-md hover:shadow-lg">
                 <ShoppingCart className="h-5 w-5" />
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">2</span>
               </Link>
@@ -71,7 +71,7 @@ const ProductDetail = () => {
         {/* Breadcrumb */}
         <nav className="mb-8">
           <div className="flex items-center space-x-2 text-sm">
-            <Link to="/shop" className="text-blue-600 hover:text-blue-800 font-medium transition-colors">All Products</Link>
+            <Link to="/shop" className="text-black hover:text-gray-600 font-medium transition-colors">All Products</Link>
             <span className="text-gray-400">/</span>
             <span className="text-gray-900 font-medium">{product.name}</span>
           </div>
@@ -80,14 +80,14 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Image */}
           <div className="space-y-6">
-            <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-lg">
-              <div className="w-40 h-32 bg-white rounded-xl flex items-center justify-center shadow-md">
+            <div className="aspect-square bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center overflow-hidden shadow-md">
+              <div className="w-40 h-32 bg-white rounded-lg flex items-center justify-center shadow-sm">
                 <div className="w-20 h-16 bg-gray-300 rounded-lg flex items-center justify-center">
                   <Bookmark className="w-8 h-8 text-gray-500" />
                 </div>
               </div>
             </div>
-            <button className="w-full text-center text-sm font-medium text-blue-600 border-2 border-blue-300 bg-blue-50 rounded-xl py-3 hover:bg-blue-100 hover:border-blue-400 transition-all duration-200">
+            <button className="w-full text-center text-sm font-medium text-black border border-gray-400 bg-gray-50 rounded-lg py-3 hover:bg-gray-100 hover:border-gray-600 transition-all duration-200">
               Add to wish list
             </button>
           </div>
@@ -97,14 +97,14 @@ const ProductDetail = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
               <div className="flex items-center space-x-3 mb-2">
-                <span className="text-3xl font-bold text-green-600">₹{product.price.toLocaleString()}</span>
+                <span className="text-3xl font-bold text-black">₹{product.price.toLocaleString()}</span>
                 <span className="text-xl text-gray-500 line-through">₹{product.originalPrice.toLocaleString()}</span>
                 <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">/ per unit</span>
               </div>
             </div>
 
             {/* Date Selection */}
-            <div className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-md">
+            <div className="bg-white rounded-lg p-6 border border-gray-300 shadow-sm">
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">From</label>
@@ -113,7 +113,7 @@ const ProductDetail = () => {
                       type="date"
                       value={selectedDateFrom}
                       onChange={(e) => setSelectedDateFrom(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition-all duration-200"
+                      className="w-full px-4 py-3 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black hover:border-gray-600 transition-all duration-200"
                     />
                     <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   </div>
@@ -125,7 +125,7 @@ const ProductDetail = () => {
                       type="date"
                       value={selectedDateTo}
                       onChange={(e) => setSelectedDateTo(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition-all duration-200"
+                      className="w-full px-4 py-3 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black hover:border-gray-600 transition-all duration-200"
                     />
                     <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   </div>
@@ -135,7 +135,7 @@ const ProductDetail = () => {
               {/* Quantity */}
               <div className="flex items-center space-x-4 mb-6">
                 <span className="text-sm font-bold text-gray-700">Qty</span>
-                <div className="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                <div className="flex items-center border border-gray-400 rounded-lg overflow-hidden">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="p-3 hover:bg-gray-100 transition-colors"
@@ -153,15 +153,15 @@ const ProductDetail = () => {
               </div>
 
               {/* Add to Cart Button */}
-              <button className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105">
+              <button className="w-full bg-black text-white py-4 rounded-lg hover:bg-gray-800 transition-all duration-200 font-bold text-lg shadow-md hover:shadow-lg transform hover:scale-105">
                 🛒 Add To Cart
               </button>
             </div>
 
             {/* Coupon */}
-            <div className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-md">
+            <div className="bg-white rounded-lg p-6 border border-gray-300 shadow-sm">
               <label className="block text-sm font-bold text-gray-700 mb-3">Apply Coupon</label>
-              <div className="flex overflow-hidden rounded-lg border-2 border-gray-300">
+              <div className="flex overflow-hidden rounded-lg border border-gray-400">
                 <input
                   type="text"
                   value={couponCode}
@@ -176,16 +176,16 @@ const ProductDetail = () => {
             </div>
 
             {/* Product Description */}
-            <div className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-md">
+            <div className="bg-white rounded-lg p-6 border border-gray-300 shadow-sm">
               <h3 className="font-bold text-gray-900 mb-3 text-lg">Product description</h3>
               <p className="text-gray-600 mb-3 leading-relaxed">{product.description}</p>
-              <button className="text-blue-600 font-medium hover:text-blue-800 transition-colors">
+              <button className="text-black font-medium hover:text-gray-600 transition-colors">
                 Read More &gt;
               </button>
             </div>
 
             {/* Terms & Conditions */}
-            <div className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-md">
+            <div className="bg-white rounded-lg p-6 border border-gray-300 shadow-sm">
               <h3 className="font-bold text-gray-900 mb-3 text-lg">Terms & Conditions</h3>
               <p className="text-gray-600 leading-relaxed">{product.terms}</p>
             </div>
@@ -193,7 +193,7 @@ const ProductDetail = () => {
             {/* Share */}
             <div className="flex items-center space-x-3">
               <span className="text-sm font-bold text-gray-700">Share:</span>
-              <button className="text-blue-600 hover:text-blue-800 p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all duration-200">
+              <button className="text-black hover:text-gray-600 p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200">
                 <Share size={18} />
               </button>
             </div>
