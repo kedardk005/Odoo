@@ -40,7 +40,7 @@ const Profile = () => {
   return (
     <div className="p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xl border border-gray-200 hover:shadow-2xl transition-shadow duration-300">
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-8 rounded-t-lg">
             <div className="flex items-center justify-between">
@@ -57,7 +57,7 @@ const Profile = () => {
                 {!isEditing ? (
                   <button
                     onClick={handleEdit}
-                    className="flex items-center space-x-2 bg-white text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-2 bg-white text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                   >
                     <Edit2 size={16} />
                     <span>Edit Profile</span>
@@ -66,14 +66,14 @@ const Profile = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={handleSave}
-                      className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                      className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                     >
                       <Save size={16} />
                       <span>Save</span>
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                      className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                     >
                       <X size={16} />
                       <span>Cancel</span>
@@ -99,7 +99,7 @@ const Profile = () => {
                     type="text"
                     value={editData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary-300"
                   />
                 ) : (
                   <div className="flex items-center space-x-2 p-2">
@@ -119,7 +119,7 @@ const Profile = () => {
                     type="email"
                     value={editData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary-300"
                   />
                 ) : (
                   <div className="flex items-center space-x-2 p-2">
@@ -139,7 +139,7 @@ const Profile = () => {
                     type="tel"
                     value={editData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary-300"
                   />
                 ) : (
                   <div className="flex items-center space-x-2 p-2">
@@ -158,7 +158,7 @@ const Profile = () => {
                   <select
                     value={editData.department}
                     onChange={(e) => handleInputChange('department', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary-300"
                   >
                     <option value="Management">Management</option>
                     <option value="Operations">Operations</option>
@@ -182,7 +182,7 @@ const Profile = () => {
                     value={editData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
                     rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary-300"
                   />
                 ) : (
                   <div className="flex items-start space-x-2 p-2">
@@ -194,7 +194,7 @@ const Profile = () => {
             </div>
 
             {/* Account Information */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="mt-8 pt-6 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white rounded-lg p-6 shadow-inner">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
