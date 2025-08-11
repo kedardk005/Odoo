@@ -10,6 +10,7 @@ import Landing from "@/pages/landing";
 import Signup from "@/pages/signup";
 
 // Admin Pages
+import AdminHome from "@/pages/admin/home";
 import Dashboard from "@/pages/dashboard";
 import Products from "@/pages/products";
 import Orders from "@/pages/orders";
@@ -18,6 +19,7 @@ import Booking from "@/pages/booking";
 import Checkout from "@/pages/checkout";
 
 // Customer Pages
+import CustomerHome from "@/pages/customer/home";
 import CustomerProducts from "@/pages/customer/products";
 import CustomerCart from "@/pages/customer/cart";
 import CustomerCheckout from "@/pages/customer/checkout";
@@ -30,6 +32,7 @@ function Router() {
       <Route path="/signup" component={Signup} />
       
       {/* Admin Routes */}
+      <Route path="/admin/home" component={AdminHome} />
       <Route path="/admin/dashboard" component={Dashboard} />
       <Route path="/admin/products" component={Products} />
       <Route path="/admin/orders" component={Orders} />
@@ -38,6 +41,7 @@ function Router() {
       <Route path="/admin/checkout" component={Checkout} />
       
       {/* Customer Routes */}
+      <Route path="/customer/home" component={CustomerHome} />
       <Route path="/customer/products" component={CustomerProducts} />
       <Route path="/customer/cart" component={CustomerCart} />
       <Route path="/customer/checkout" component={CustomerCheckout} />

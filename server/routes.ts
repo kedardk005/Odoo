@@ -1,7 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Razorpay from "razorpay";
+import crypto from "crypto";
 import { storage } from "./storage";
+import { sendEmail, emailTemplates } from "./email";
 import { insertUserSchema, insertProductSchema, insertCategorySchema, insertOrderSchema, insertOrderItemSchema, insertDeliverySchema, insertPaymentSchema, insertNotificationSchema } from "@shared/schema";
 
 // Initialize Razorpay

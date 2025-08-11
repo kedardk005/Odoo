@@ -1,22 +1,20 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  Package, 
-  Shield, 
-  Clock, 
-  Star, 
-  CheckCircle, 
-  Users, 
-  Settings,
-  Eye,
-  EyeOff,
+  User, 
+  Mail, 
+  Phone, 
+  Lock, 
+  Building2, 
+  MapPin, 
+  CheckCircle,
   ArrowLeft,
   UserPlus
 } from "lucide-react";
@@ -28,19 +26,21 @@ import { apiRequest } from "@/lib/queryClient";
 export default function Signup() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [userType, setUserType] = useState("customer");
+  const [accountType, setAccountType] = useState<"customer" | "business">("customer");
   const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
     firstName: "",
     lastName: "",
+    email: "",
     phone: "",
+    password: "",
+    confirmPassword: "",
+    companyName: "",
+    businessType: "",
     address: "",
-    role: "customer"
+    city: "",
+    state: "",
+    pincode: "",
+    agreeToTerms: false
   });
 
   const signupMutation = useMutation({
@@ -48,12 +48,18 @@ export default function Signup() {
       const response = await apiRequest("POST", "/api/auth/signup", userData);
       return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Account Created Successfully!",
-        description: "You can now sign in with your credentials",
+        description: "Welcome to RentPro. You can now log in to your account.",
       });
-      setLocation("/");
+      
+      // Redirect based on account type
+      if (accountType === "customer") {
+        setLocation("/customer/home");
+      } else {
+        setLocation("/admin/home");
+      }
     },
     onError: (error: any) => {
       toast({
@@ -64,353 +70,360 @@ export default function Signup() {
     },
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value,
-      role: userType
+      [field]: value
     }));
   };
 
   const validateForm = () => {
-    if (!formData.username || !formData.email || !formData.password || !formData.firstName || !formData.lastName) {
-      toast({
-        title: "Missing Required Fields",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return false;
+    const required = ["firstName", "lastName", "email", "phone", "password"];
+    if (accountType === "business") {
+      required.push("companyName", "businessType");
+    }
+
+    for (const field of required) {
+      if (!formData[field as keyof typeof formData]) {
+        return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
+      }
     }
 
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Password and confirm password do not match",
-        variant: "destructive"
-      });
-      return false;
+      return "Passwords do not match";
     }
 
     if (formData.password.length < 6) {
-      toast({
-        title: "Weak Password",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive"
-      });
-      return false;
+      return "Password must be at least 6 characters long";
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address",
-        variant: "destructive"
-      });
-      return false;
+    if (!formData.agreeToTerms) {
+      return "Please agree to the terms and conditions";
     }
 
-    return true;
+    return null;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
 
-    const { confirmPassword, ...submitData } = formData;
-    signupMutation.mutate(submitData);
-  };
-
-  const features = [
-    {
-      icon: Package,
-      title: "Equipment Rental",
-      description: "Access to wide range of professional equipment"
-    },
-    {
-      icon: Shield,
-      title: "Secure Platform",
-      description: "Safe and secure rental management system"
-    },
-    {
-      icon: Clock,
-      title: "24/7 Support",
-      description: "Round-the-clock customer support"
-    },
-    {
-      icon: Star,
-      title: "Quality Assured",
-      description: "All equipment is maintained and tested"
+    const validationError = validateForm();
+    if (validationError) {
+      toast({
+        title: "Validation Error",
+        description: validationError,
+        variant: "destructive",
+      });
+      return;
     }
-  ];
+
+    const userData = {
+      ...formData,
+      accountType,
+      role: accountType === "customer" ? "customer" : "admin"
+    };
+
+    signupMutation.mutate(userData);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => setLocation("/")}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Button>
-              <div className="flex items-center space-x-2">
-                <Package className="h-8 w-8 text-primary" />
-                <h1 className="text-2xl font-bold text-gray-900">RentPro</h1>
-              </div>
-            </div>
-            <Badge variant="secondary">Create Account</Badge>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Button variant="ghost" onClick={() => setLocation("/")} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
+          <p className="text-gray-600 mt-2">Join RentPro and start renting equipment today</p>
         </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          {/* Left Side - Info */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-4xl font-bold text-gray-900">
-                Join RentPro Today
-              </h2>
-              <p className="text-xl text-gray-600">
-                Create your account to start renting professional equipment or manage your rental business.
-              </p>
-            </div>
-
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <feature.icon className="h-6 w-6 text-primary" />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <UserPlus className="w-5 h-5 mr-2" />
+              Account Setup
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Account Type Selection */}
+              <div>
+                <Label className="text-base font-medium">Account Type</Label>
+                <RadioGroup
+                  value={accountType}
+                  onValueChange={(value: "customer" | "business") => setAccountType(value)}
+                  className="mt-2"
+                >
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <RadioGroupItem value="customer" id="customer" />
+                    <Label htmlFor="customer" className="flex-1 cursor-pointer">
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 mr-2" />
+                        <div>
+                          <p className="font-medium">Customer Account</p>
+                          <p className="text-sm text-gray-500">Rent equipment for personal or project use</p>
+                        </div>
+                      </div>
+                    </Label>
                   </div>
+                  
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <RadioGroupItem value="business" id="business" />
+                    <Label htmlFor="business" className="flex-1 cursor-pointer">
+                      <div className="flex items-center">
+                        <Building2 className="w-4 h-4 mr-2" />
+                        <div>
+                          <p className="font-medium">Business Account</p>
+                          <p className="text-sm text-gray-500">Manage equipment rentals for your business</p>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Separator />
+
+              {/* Personal Information */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-900">Personal Information</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{feature.title}</h3>
-                    <p className="text-sm text-gray-600">{feature.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Benefits */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-4">Why Choose RentPro?</h3>
-              <ul className="space-y-2">
-                <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-gray-600">Wide selection of professional equipment</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-gray-600">Competitive rental rates</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-gray-600">Flexible rental periods</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-gray-600">Secure payment processing</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Right Side - Signup Form */}
-          <div className="flex justify-center">
-            <Card className="w-full max-w-md">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl flex items-center justify-center">
-                  <UserPlus className="w-6 h-6 mr-2" />
-                  Create Account
-                </CardTitle>
-                <p className="text-gray-600">Sign up to get started</p>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={userType} onValueChange={setUserType}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="customer" className="flex items-center space-x-2">
-                      <Users className="h-4 w-4" />
-                      <span>Customer</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="admin" className="flex items-center space-x-2">
-                      <Settings className="h-4 w-4" />
-                      <span>Business</span>
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="customer" className="space-y-2 mt-4">
-                    <p className="text-sm text-gray-600">
-                      Sign up as a customer to browse and rent equipment
-                    </p>
-                  </TabsContent>
-
-                  <TabsContent value="admin" className="space-y-2 mt-4">
-                    <p className="text-sm text-gray-600">
-                      Sign up as a business to manage your rental inventory
-                    </p>
-                  </TabsContent>
-                </Tabs>
-
-                <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="firstName">First Name *</Label>
-                      <Input
-                        id="firstName"
-                        placeholder="John"
-                        value={formData.firstName}
-                        onChange={(e) => handleInputChange("firstName", e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">Last Name *</Label>
-                      <Input
-                        id="lastName"
-                        placeholder="Doe"
-                        value={formData.lastName}
-                        onChange={(e) => handleInputChange("lastName", e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="username">Username *</Label>
+                    <Label htmlFor="firstName">First Name *</Label>
                     <Input
-                      id="username"
-                      placeholder="Enter username"
-                      value={formData.username}
-                      onChange={(e) => handleInputChange("username", e.target.value)}
+                      id="firstName"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange("firstName", e.target.value)}
+                      placeholder="John"
                       required
                     />
                   </div>
-
                   <div>
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Input
+                      id="lastName"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange("lastName", e.target.value)}
+                      placeholder="Doe"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="email">Email Address *</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Enter your email"
                       value={formData.email}
                       onChange={(e) => handleInputChange("email", e.target.value)}
+                      placeholder="john@example.com"
+                      className="pl-10"
                       required
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <Label htmlFor="phone">Phone Number</Label>
+                <div>
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="phone"
-                      placeholder="Enter phone number"
                       value={formData.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
+                      placeholder="+91 9876543210"
+                      className="pl-10"
+                      required
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Textarea
+                <div>
+                  <Label htmlFor="password">Password *</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      placeholder="Enter password"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                      placeholder="Confirm password"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Business Information (only for business accounts) */}
+              {accountType === "business" && (
+                <>
+                  <Separator />
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-gray-900">Business Information</h3>
+                    
+                    <div>
+                      <Label htmlFor="companyName">Company Name *</Label>
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="companyName"
+                          value={formData.companyName}
+                          onChange={(e) => handleInputChange("companyName", e.target.value)}
+                          placeholder="Your Company Ltd."
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="businessType">Business Type *</Label>
+                      <Select value={formData.businessType} onValueChange={(value) => handleInputChange("businessType", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select business type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="construction">Construction</SelectItem>
+                          <SelectItem value="events">Events & Entertainment</SelectItem>
+                          <SelectItem value="photography">Photography & Film</SelectItem>
+                          <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                          <SelectItem value="agriculture">Agriculture</SelectItem>
+                          <SelectItem value="rental-business">Equipment Rental Business</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Address Information */}
+              <Separator />
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-900">Address (Optional)</h3>
+                
+                <div>
+                  <Label htmlFor="address">Street Address</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
                       id="address"
-                      placeholder="Enter your address"
                       value={formData.address}
                       onChange={(e) => handleInputChange("address", e.target.value)}
-                      rows={2}
+                      placeholder="123 Main Street"
+                      className="pl-10"
                     />
                   </div>
-
-                  <div>
-                    <Label htmlFor="password">Password *</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Create password"
-                        value={formData.password}
-                        onChange={(e) => handleInputChange("password", e.target.value)}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                    <div className="relative">
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm password"
-                        value={formData.confirmPassword}
-                        onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={signupMutation.isPending}
-                  >
-                    {signupMutation.isPending ? (
-                      <>
-                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Create Account
-                      </>
-                    )}
-                  </Button>
-                </form>
-
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-gray-600">
-                    Already have an account?{" "}
-                    <Button variant="link" className="p-0" onClick={() => setLocation("/")}>
-                      Sign In
-                    </Button>
-                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <p className="text-gray-600">
-              © 2025 RentPro. Professional Equipment Rental Management System.
-            </p>
-          </div>
-        </div>
-      </footer>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange("city", e.target.value)}
+                      placeholder="Mumbai"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      value={formData.state}
+                      onChange={(e) => handleInputChange("state", e.target.value)}
+                      placeholder="Maharashtra"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="pincode">PIN Code</Label>
+                  <Input
+                    id="pincode"
+                    value={formData.pincode}
+                    onChange={(e) => handleInputChange("pincode", e.target.value)}
+                    placeholder="400001"
+                  />
+                </div>
+              </div>
+
+              {/* Terms and Conditions */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
+                />
+                <Label htmlFor="terms" className="text-sm">
+                  I agree to the{" "}
+                  <a href="#" className="text-blue-600 hover:underline">
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a href="#" className="text-blue-600 hover:underline">
+                    Privacy Policy
+                  </a>
+                </Label>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={signupMutation.isPending}
+              >
+                {signupMutation.isPending ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Create Account
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{" "}
+                <button
+                  onClick={() => setLocation("/")}
+                  className="text-blue-600 hover:underline font-medium"
+                >
+                  Sign in here
+                </button>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
