@@ -19,7 +19,10 @@ import {
   LogOut, 
   Settings, 
   Home,
-  Search
+  Search,
+  Users,
+  FileText,
+  DollarSign
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -138,6 +141,30 @@ export default function NavigationHeader({ userType, currentUser }: NavigationHe
                   >
                     <Search className="w-4 h-4" />
                     <span>Orders</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setLocation("/admin/customers")}
+                    className="flex items-center space-x-2"
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Customers</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setLocation("/admin/quotations")}
+                    className="flex items-center space-x-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Quotations</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setLocation("/admin/pricing")}
+                    className="flex items-center space-x-2"
+                  >
+                    <DollarSign className="w-4 h-4" />
+                    <span>Pricing</span>
                   </Button>
                 </>
               )}

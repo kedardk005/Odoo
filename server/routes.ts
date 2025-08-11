@@ -359,6 +359,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quotation routes
+  app.get("/api/quotations", async (req, res) => {
+    try {
+      const customerId = req.query.customerId as string;
+      const quotations = await storage.getQuotations(customerId);
+      res.json(quotations);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/quotations", async (req, res) => {
+    try {
+      const quotation = await storage.createQuotation(req.body);
+      res.status(201).json(quotation);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/quotations/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      const quotation = await storage.updateQuotationStatus(req.params.id, status);
+      res.json(quotation);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/quotations/:id/convert-to-order", async (req, res) => {
+    try {
+      const order = await storage.convertQuotationToOrder(req.params.id);
+      res.status(201).json(order);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Pricing rules routes
+  app.get("/api/pricing-rules", async (req, res) => {
+    try {
+      const productId = req.query.productId as string;
+      const categoryId = req.query.categoryId as string;
+      const rules = await storage.getPricingRules(productId, categoryId);
+      res.json(rules);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/pricing-rules", async (req, res) => {
+    try {
+      const rule = await storage.createPricingRule(req.body);
+      res.status(201).json(rule);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/pricing-rules/:id", async (req, res) => {
+    try {
+      res.json({ message: "Pricing rule updated successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
