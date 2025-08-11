@@ -62,17 +62,17 @@ const Dashboard = () => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Quotations</h3>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.quotations}</p>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:border-primary-200">
+          <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Quotations</h3>
+          <p className="text-3xl font-bold text-gray-900 mt-2 bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">{stats.quotations}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Rentals</h3>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.rentals}</p>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:border-green-200">
+          <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Rentals</h3>
+          <p className="text-3xl font-bold text-gray-900 mt-2 bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">{stats.rentals}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Revenue</h3>
-          <p className="text-3xl font-bold text-gray-900 mt-2">₹{stats.revenue.toLocaleString()}</p>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:border-blue-200">
+          <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Revenue</h3>
+          <p className="text-3xl font-bold text-gray-900 mt-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">₹{stats.revenue.toLocaleString()}</p>
         </div>
       </div>
 
