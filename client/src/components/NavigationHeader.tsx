@@ -1,295 +1,204 @@
-import { useState, useEffect } from "react";
-import React from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  MenuIcon, 
+  X, 
+  Home, 
   Package, 
   ShoppingCart, 
-  Bell, 
-  User, 
-  LogOut, 
-  Settings, 
-  Home,
-  Search,
-  Users,
-  FileText,
-  DollarSign
+  Users, 
+  Calendar, 
+  FileText, 
+  DollarSign,
+  Settings,
+  LogOut,
+  User
 } from "lucide-react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
 
 interface NavigationHeaderProps {
-  userType: "customer" | "admin";
-  currentUser?: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    profileImageUrl?: string;
-  };
+  userType?: "admin" | "customer";
 }
 
-export default function NavigationHeader({ userType, currentUser }: NavigationHeaderProps) {
+export default function NavigationHeader({ userType = "admin" }: NavigationHeaderProps) {
   const [, setLocation] = useLocation();
-  const [cartItemCount, setCartItemCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Get cart count for customers
-  React.useEffect(() => {
-    if (userType === "customer") {
-      const updateCartCount = () => {
-        const cart = JSON.parse(localStorage.getItem("rentalCart") || "[]");
-        setCartItemCount(cart.length);
-      };
+  const adminMenuItems = [
+    { label: "Dashboard", path: "/admin", icon: Home },
+    { label: "Products", path: "/admin/products", icon: Package },
+    { label: "Orders", path: "/admin/orders", icon: ShoppingCart },
+    { label: "Customers", path: "/admin/customers", icon: Users },
+    { label: "Booking", path: "/admin/booking", icon: Calendar },
+    { label: "Quotations", path: "/admin/quotations", icon: FileText },
+    { label: "Pricing", path: "/admin/pricing", icon: DollarSign },
+  ];
 
-      updateCartCount();
-      window.addEventListener("storage", updateCartCount);
-      return () => window.removeEventListener("storage", updateCartCount);
-    }
-  }, [userType]);
+  const customerMenuItems = [
+    { label: "Products", path: "/products", icon: Package },
+    { label: "My Orders", path: "/customer/orders", icon: ShoppingCart },
+    { label: "Quotations", path: "/customer/quotations", icon: FileText },
+    { label: "Profile", path: "/customer/profile", icon: User },
+  ];
 
-  // Get notifications count
-  const { data: notifications } = useQuery({
-    queryKey: ["/api/notifications", currentUser?.email || "guest"],
-    queryFn: () => api.getNotifications(currentUser?.email || "guest"),
-    enabled: !!currentUser
-  });
+  const menuItems = userType === "admin" ? adminMenuItems : customerMenuItems;
+  const currentPath = window.location.pathname;
 
-  const unreadNotifications = notifications?.filter(n => !n.read).length || 0;
-
-  const getUserInitials = () => {
-    if (!currentUser) return "GU";
-    return `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase();
-  };
-
-  const getFullName = () => {
-    if (!currentUser) return "Guest User";
-    return `${currentUser.firstName} ${currentUser.lastName}`;
+  const handleNavigation = (path: string) => {
+    setLocation(path);
+    setIsMobileMenuOpen(false);
   };
 
   const handleLogout = () => {
-    localStorage.clear();
-    setLocation("/");
+    window.location.href = "/api/logout";
   };
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Left side - Logo and Navigation */}
-          <div className="flex items-center space-x-8">
-            <div className="flex-shrink-0">
-              <button
-                onClick={() => setLocation(userType === "customer" ? "/customer/home" : "/admin/home")}
-                className="text-2xl font-bold text-blue-600 hover:text-blue-700"
-              >
-                RentPro
-              </button>
-            </div>
-
-            {/* Navigation Links */}
-            <nav className="hidden md:flex space-x-6">
-              {userType === "customer" ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/customer/home")}
-                    className="flex items-center space-x-2"
-                  >
-                    <Home className="w-4 h-4" />
-                    <span>Home</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/customer/products")}
-                    className="flex items-center space-x-2"
-                  >
-                    <Package className="w-4 h-4" />
-                    <span>Equipment</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/customer/quotation")}
-                    className="flex items-center space-x-2"
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>Request Quote</span>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/admin/home")}
-                    className="flex items-center space-x-2"
-                  >
-                    <Home className="w-4 h-4" />
-                    <span>Dashboard</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/admin/products")}
-                    className="flex items-center space-x-2"
-                  >
-                    <Package className="w-4 h-4" />
-                    <span>Products</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/admin/orders")}
-                    className="flex items-center space-x-2"
-                  >
-                    <Search className="w-4 h-4" />
-                    <span>Orders</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/admin/customers")}
-                    className="flex items-center space-x-2"
-                  >
-                    <Users className="w-4 h-4" />
-                    <span>Customers</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/admin/quotations")}
-                    className="flex items-center space-x-2"
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>Quotations</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setLocation("/admin/pricing")}
-                    className="flex items-center space-x-2"
-                  >
-                    <DollarSign className="w-4 h-4" />
-                    <span>Pricing</span>
-                  </Button>
-                </>
-              )}
-            </nav>
+          {/* Logo */}
+          <div className="flex items-center">
+            <button
+              onClick={() => handleNavigation(userType === "admin" ? "/admin" : "/")}
+              className="text-2xl font-bold text-blue-600 hover:text-blue-700"
+            >
+              RentPro
+            </button>
+            {userType === "admin" && (
+              <Badge variant="secondary" className="ml-2">
+                Admin
+              </Badge>
+            )}
           </div>
 
-          {/* Right side - Actions and User Menu */}
-          <div className="flex items-center space-x-4">
-            {/* Customer Cart */}
-            {userType === "customer" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLocation("/customer/cart")}
-                className="relative"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {cartItemCount > 0 && (
-                  <Badge 
-                    className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs"
-                    variant="destructive"
-                  >
-                    {cartItemCount}
-                  </Badge>
-                )}
-              </Button>
-            )}
-
-            {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="w-5 h-5" />
-              {unreadNotifications > 0 && (
-                <Badge 
-                  className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center text-xs"
-                  variant="destructive"
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-8">
+            {menuItems.map((item) => {
+              const isActive = currentPath === item.path || 
+                (item.path === "/admin" && currentPath === "/admin/home");
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-blue-100 text-blue-700"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
                 >
-                  {unreadNotifications}
-                </Badge>
-              )}
-            </Button>
+                  <item.icon className="w-4 h-4 mr-2" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
 
-            {/* User Menu */}
+          {/* User Menu */}
+          <div className="hidden md:flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage 
-                      src={currentUser?.profileImageUrl} 
-                      alt={getFullName()} 
-                    />
-                    <AvatarFallback className="bg-blue-100 text-blue-600 font-medium">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
+                <Button variant="outline" size="sm">
+                  <User className="w-4 h-4 mr-2" />
+                  {userType === "admin" ? "Admin" : "Account"}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      Welcome, {currentUser?.firstName || "Guest"}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {currentUser?.email || "guest@example.com"}
-                    </p>
-                    <Badge variant="secondary" className="w-fit text-xs mt-1">
-                      {userType === "customer" ? "Customer" : "Admin"} Account
-                    </Badge>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                
-                {userType === "customer" ? (
-                  <>
-                    <DropdownMenuItem onClick={() => setLocation("/customer/home")}>
-                      <Home className="mr-2 h-4 w-4" />
-                      <span>Home</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation("/customer/orders")}>
-                      <Package className="mr-2 h-4 w-4" />
-                      <span>My Orders</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation("/customer/cart")}>
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      <span>Cart ({cartItemCount})</span>
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem onClick={() => setLocation("/admin/dashboard")}>
-                      <Home className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation("/admin/products")}>
-                      <Package className="mr-2 h-4 w-4" />
-                      <span>Manage Products</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation("/admin/customers")}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Customers</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
                 </DropdownMenuItem>
+                {userType === "admin" && (
+                  <DropdownMenuItem onClick={() => handleNavigation("/admin/settings")}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-4 h-4" />
+              ) : (
+                <MenuIcon className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
+              {menuItems.map((item) => {
+                const isActive = currentPath === item.path;
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => handleNavigation(item.path)}
+                    className={`flex items-center w-full px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      isActive
+                        ? "bg-blue-100 text-blue-700"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5 mr-3" />
+                    {item.label}
+                  </button>
+                );
+              })}
+              
+              <div className="border-t pt-4">
+                <button
+                  onClick={() => handleNavigation("/profile")}
+                  className="flex items-center w-full px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  <User className="w-5 h-5 mr-3" />
+                  Profile
+                </button>
+                
+                {userType === "admin" && (
+                  <button
+                    onClick={() => handleNavigation("/admin/settings")}
+                    className="flex items-center w-full px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    <Settings className="w-5 h-5 mr-3" />
+                    Settings
+                  </button>
+                )}
+                
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-900 hover:bg-red-50"
+                >
+                  <LogOut className="w-5 h-5 mr-3" />
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
