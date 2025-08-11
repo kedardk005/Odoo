@@ -14,15 +14,15 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors;
+    @apply bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105;
   }
-  
+
   .btn-secondary {
-    @apply bg-white text-black border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors;
+    @apply bg-white text-black border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105;
   }
   
   .status-badge {
-    @apply px-2 py-1 rounded-full text-xs font-medium;
+    @apply px-2 py-1 rounded-full text-xs font-medium shadow-sm hover:shadow-md transition-shadow duration-150;
   }
   
   .status-pending {
@@ -43,5 +43,40 @@
   
   .status-cancelled {
     @apply bg-red-100 text-red-800;
+  }
+
+  /* Custom animations */
+  @keyframes slideInFromTop {
+    0% {
+      transform: translateY(-10px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-in {
+    animation: slideInFromTop 0.2s ease-out;
+  }
+
+  .slide-in-from-top-2 {
+    animation: slideInFromTop 0.2s ease-out;
+  }
+
+  /* Gradient text utilities */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg;
+  }
+
+  /* Enhanced input focus */
+  .input-enhanced {
+    @apply transition-all duration-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent hover:border-primary-300;
   }
 }
