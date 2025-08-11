@@ -25,7 +25,10 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="rental" element={<RentalOrders />} />
             <Route path="rental/:id" element={<RentalOrderDetail />} />
+            <Route path="orders" element={<Orders />} />
             <Route path="products" element={<Products />} />
+            <Route path="reporting" element={<Reporting />} />
+            <Route path="settings" element={<Settings />} />
             <Route path="transfer" element={<Transfer />} />
           </Route>
           
