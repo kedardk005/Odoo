@@ -186,25 +186,25 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                <tr>
+                <tr className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">New Rental Order</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">2 hours ago</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="status-badge bg-green-100 text-green-800">Completed</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 shadow-sm hover:shadow-md transition-shadow duration-150">Completed</span>
                   </td>
                 </tr>
-                <tr>
+                <tr className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">Product Return</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">4 hours ago</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="status-badge bg-blue-100 text-blue-800">Processing</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 shadow-sm hover:shadow-md transition-shadow duration-150">Processing</span>
                   </td>
                 </tr>
-                <tr>
+                <tr className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">Stock Update</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">6 hours ago</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="status-badge bg-yellow-100 text-yellow-800">Pending</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 shadow-sm hover:shadow-md transition-shadow duration-150">Pending</span>
                   </td>
                 </tr>
               </tbody>
