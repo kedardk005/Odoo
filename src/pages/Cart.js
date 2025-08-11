@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Minus, Plus, Heart, Trash2 } from 'lucide-react';
+import { Minus, Plus, Heart, Trash2, ShoppingCart, User, MessageCircle, ChevronDown } from 'lucide-react';
 
 const Cart = () => {
   const [couponCode, setCouponCode] = useState('');
@@ -38,29 +38,54 @@ const Cart = () => {
   const total = subtotal + deliveryCharge + taxes;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
+      <header className="bg-white border-b-2 border-gray-200 shadow-sm">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
-              <Link to="/shop" className="text-xl font-bold">Rental Shop</Link>
+              <Link to="/shop" className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+                🏠 Home
+              </Link>
               <nav className="hidden md:flex space-x-6">
-                <Link to="/shop" className="text-gray-600 hover:text-gray-900">Home</Link>
-                <Link to="/shop" className="text-gray-600 hover:text-gray-900">Rental Shop</Link>
-                <Link to="/shop/wishlist" className="text-gray-600 hover:text-gray-900">Wishlist</Link>
-                <Link to="/shop/contact" className="text-gray-600 hover:text-gray-900">Contact us</Link>
+                <Link to="/shop" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                  Home
+                </Link>
+                <Link to="/shop" className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-medium">
+                  Rental Shop
+                </Link>
+                <Link to="/shop/wishlist" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                  Wishlist
+                </Link>
+                <Link to="/shop/contact" className="px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200 font-medium">
+                  Contact us
+                </Link>
               </nav>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative group">
+                <button className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-3 py-2 rounded-full hover:bg-blue-200 transition-all duration-200">
+                  <User className="h-5 w-5" />
+                  <span className="text-sm font-medium">admin</span>
+                  <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">📋</span>
+                  </div>
+                </button>
+              </div>
+              <Link to="/shop/contact" className="text-blue-600 hover:text-blue-800 transition-colors">
+                <MessageCircle className="h-6 w-6" />
+              </Link>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-6 py-8">
         {/* Breadcrumb */}
-        <nav className="mb-6">
+        <nav className="mb-8">
           <div className="flex items-center space-x-2 text-sm">
-            <span className="text-gray-900 font-medium">Review Order</span>
+            <span className="text-gray-900 font-bold">Review Order</span>
             <span className="text-gray-400">&gt;</span>
             <span className="text-gray-600">Delivery</span>
             <span className="text-gray-400">&gt;</span>
@@ -71,48 +96,52 @@ const Cart = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Order Overview</h1>
+            <h1 className="text-3xl font-bold text-red-500">Order Overview</h1>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               {cartItems.map((item) => (
-                <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <div className="w-12 h-8 bg-gray-300 rounded flex items-center justify-center">
-                        <span className="text-gray-500 text-xs">IMG</span>
+                <div key={item.id} className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <div className="flex items-center space-x-6">
+                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-gray-200 flex items-center justify-center">
+                      <div className="w-16 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                        <div className="w-10 h-8 bg-gray-300 rounded flex items-center justify-center">
+                          <span className="text-gray-500 text-xs font-medium">IMG</span>
+                        </div>
                       </div>
                     </div>
                     
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-lg font-semibold text-gray-900">₹{item.price.toFixed(2)}</p>
+                      <h3 className="font-bold text-gray-900 text-lg mb-2">{item.name}</h3>
+                      <p className="text-2xl font-bold text-green-600">₹{item.price.toFixed(2)}</p>
                     </div>
                     
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-600">Qty</span>
-                      <div className="flex items-center border border-gray-300 rounded-md">
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="p-2 hover:bg-gray-50"
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className="px-4 py-2 text-center min-w-[60px]">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-2 hover:bg-gray-50"
-                        >
-                          <Plus size={16} />
-                        </button>
+                    <div className="flex items-center space-x-6">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm font-bold text-gray-700">Qty</span>
+                        <div className="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="p-2 hover:bg-gray-100 transition-colors"
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className="px-4 py-2 text-center min-w-[60px] font-medium bg-gray-50">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="p-2 hover:bg-gray-100 transition-colors"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
                       </div>
                       
-                      <button className="p-2 text-gray-400 hover:text-red-500">
+                      <button className="p-3 text-gray-400 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition-all duration-200">
                         <Heart size={20} />
                       </button>
                       
                       <button 
                         onClick={() => removeItem(item.id)}
-                        className="p-2 text-gray-400 hover:text-red-500"
+                        className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
                       >
                         <Trash2 size={20} />
                       </button>
@@ -125,42 +154,45 @@ const Cart = () => {
 
           {/* Order Summary */}
           <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h2 className="font-medium text-gray-900 mb-4">Delivery Charge</h2>
-              <p className="text-right">-</p>
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-bold text-gray-900 text-lg">Delivery Charge</h2>
+                <ChevronDown size={16} className="text-gray-400" />
+              </div>
+              <p className="text-right text-lg font-bold text-red-500 mb-6">-</p>
               
-              <h2 className="font-medium text-gray-900 mt-6 mb-4">Sub Total</h2>
-              <p className="text-right text-lg font-semibold">₹{subtotal}</p>
+              <h2 className="font-bold text-red-500 text-lg mb-2">Sub Total</h2>
+              <p className="text-right text-2xl font-bold text-red-500 mb-6">₹{subtotal}</p>
               
-              <h2 className="font-medium text-gray-900 mt-6 mb-4">Taxes</h2>
-              <p className="text-right">₹{taxes}</p>
+              <h2 className="font-bold text-red-500 text-lg mb-2">Taxes</h2>
+              <p className="text-right text-lg font-bold text-red-500 mb-6">₹{taxes}</p>
               
-              <div className="border-t border-gray-200 mt-6 pt-4">
+              <div className="border-t-2 border-gray-200 pt-4 mb-6">
                 <div className="flex justify-between items-center">
-                  <h2 className="font-medium text-gray-900">Total</h2>
-                  <p className="text-xl font-bold">₹{total}</p>
+                  <h2 className="font-bold text-red-500 text-lg">Total</h2>
+                  <p className="text-2xl font-bold text-red-500">₹{total}</p>
                 </div>
               </div>
 
               {/* Coupon */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Apply Coupon</label>
-                <div className="flex">
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-gray-700 mb-3">Apply Coupon</label>
+                <div className="flex overflow-hidden rounded-lg border-2 border-gray-300">
                   <input
                     type="text"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="Coupon Code"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-black"
+                    className="flex-1 px-4 py-3 focus:outline-none bg-gray-50"
                   />
-                  <button className="bg-black text-white px-4 py-2 rounded-r-md hover:bg-gray-800 transition-colors">
+                  <button className="bg-black text-white px-6 py-3 hover:bg-gray-800 transition-colors font-medium">
                     Apply
                   </button>
                 </div>
               </div>
 
               <Link to="/shop/checkout">
-                <button className="w-full mt-6 bg-red-500 text-white py-3 rounded-md hover:bg-red-600 transition-colors font-medium">
+                <button className="w-full bg-gradient-to-r from-pink-400 to-pink-500 text-white py-4 rounded-xl hover:from-pink-500 hover:to-pink-600 transition-all duration-200 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105">
                   Proceed to checkout
                 </button>
               </Link>
