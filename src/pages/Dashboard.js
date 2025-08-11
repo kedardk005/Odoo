@@ -79,9 +79,12 @@ const Dashboard = () => {
       {/* Tables Grid - 2x2 Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Product Categories */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Top Product Categories</h3>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <span className="w-3 h-3 bg-primary-500 rounded-full"></span>
+              <span>Top Product Categories</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -106,9 +109,12 @@ const Dashboard = () => {
         </div>
 
         {/* Top Products */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Top Products</h3>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+              <span>Top Products</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -133,9 +139,12 @@ const Dashboard = () => {
         </div>
 
         {/* Top Customers - First Row, Full Width in Second Column */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Top Customers</h3>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+              <span>Top Customers</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -160,9 +169,12 @@ const Dashboard = () => {
         </div>
 
         {/* Additional Table - To complete 2x2 grid */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+              <span>Recent Activities</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
