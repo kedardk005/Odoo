@@ -14,6 +14,8 @@ import CustomerPortal from './pages/CustomerPortal';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import Wishlist from './pages/Wishlist';
+import Contact from './pages/Contact';
 
 function App() {
   return (
@@ -39,6 +41,8 @@ function App() {
           <Route path="/shop/product/:id" element={<ProductDetail />} />
           <Route path="/shop/cart" element={<Cart />} />
           <Route path="/shop/checkout" element={<Checkout />} />
+          <Route path="/shop/wishlist" element={<Wishlist />} />
+          <Route path="/shop/contact" element={<Contact />} />
         </Routes>
       </div>
     </Router>
