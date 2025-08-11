@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 
 // Landing Page
 import Landing from "@/pages/landing";
+import Signup from "@/pages/signup";
 
 // Admin Pages
 import Dashboard from "@/pages/dashboard";
@@ -26,6 +27,7 @@ function Router() {
     <Switch>
       {/* Landing Page */}
       <Route path="/" component={Landing} />
+      <Route path="/signup" component={Signup} />
       
       {/* Admin Routes */}
       <Route path="/admin/dashboard" component={Dashboard} />

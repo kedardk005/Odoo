@@ -201,7 +201,10 @@ export default function Landing() {
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-600">
-                    Demo credentials: Use any email and password
+                    Don't have an account?{" "}
+                    <Button variant="link" className="p-0" onClick={() => setLocation("/signup")}>
+                      Sign Up
+                    </Button>
                   </p>
                 </div>
               </CardContent>
