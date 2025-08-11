@@ -40,7 +40,7 @@ const Dashboard = () => {
             <select 
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary-300"
             >
               <option>Last 30 days</option>
               <option>Last 90 days</option>
@@ -54,7 +54,7 @@ const Dashboard = () => {
             <input
               type="text"
               placeholder="Search..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary-300"
             />
           </div>
         </div>
@@ -62,26 +62,29 @@ const Dashboard = () => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Quotations</h3>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.quotations}</p>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:border-primary-200">
+          <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Quotations</h3>
+          <p className="text-3xl font-bold text-gray-900 mt-2 bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">{stats.quotations}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Rentals</h3>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.rentals}</p>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:border-green-200">
+          <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Rentals</h3>
+          <p className="text-3xl font-bold text-gray-900 mt-2 bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">{stats.rentals}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Revenue</h3>
-          <p className="text-3xl font-bold text-gray-900 mt-2">₹{stats.revenue.toLocaleString()}</p>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:border-blue-200">
+          <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Revenue</h3>
+          <p className="text-3xl font-bold text-gray-900 mt-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">₹{stats.revenue.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Tables Grid - 2x2 Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Product Categories */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Top Product Categories</h3>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <span className="w-3 h-3 bg-primary-500 rounded-full"></span>
+              <span>Top Product Categories</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -94,7 +97,7 @@ const Dashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {topCategories.map((item, index) => (
-                  <tr key={index}>
+                  <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.category}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
@@ -106,9 +109,12 @@ const Dashboard = () => {
         </div>
 
         {/* Top Products */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Top Products</h3>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+              <span>Top Products</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -121,7 +127,7 @@ const Dashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {topProducts.map((item, index) => (
-                  <tr key={index}>
+                  <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.product}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
@@ -133,9 +139,12 @@ const Dashboard = () => {
         </div>
 
         {/* Top Customers - First Row, Full Width in Second Column */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Top Customers</h3>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+              <span>Top Customers</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -148,7 +157,7 @@ const Dashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {topCustomers.map((item, index) => (
-                  <tr key={index}>
+                  <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.customer}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.ordered}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">₹{item.revenue}</td>
@@ -160,9 +169,12 @@ const Dashboard = () => {
         </div>
 
         {/* Additional Table - To complete 2x2 grid */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+              <span>Recent Activities</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -174,25 +186,25 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                <tr>
+                <tr className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">New Rental Order</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">2 hours ago</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="status-badge bg-green-100 text-green-800">Completed</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 shadow-sm hover:shadow-md transition-shadow duration-150">Completed</span>
                   </td>
                 </tr>
-                <tr>
+                <tr className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">Product Return</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">4 hours ago</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="status-badge bg-blue-100 text-blue-800">Processing</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 shadow-sm hover:shadow-md transition-shadow duration-150">Processing</span>
                   </td>
                 </tr>
-                <tr>
+                <tr className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">Stock Update</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">6 hours ago</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="status-badge bg-yellow-100 text-yellow-800">Pending</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 shadow-sm hover:shadow-md transition-shadow duration-150">Pending</span>
                   </td>
                 </tr>
               </tbody>

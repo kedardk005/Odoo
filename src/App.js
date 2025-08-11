@@ -9,10 +9,13 @@ import Products from './pages/Products';
 import Reporting from './pages/Reporting';
 import Settings from './pages/Settings';
 import Transfer from './pages/Transfer';
+import Profile from './pages/Profile';
 import CustomerPortal from './pages/CustomerPortal';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import Wishlist from './pages/Wishlist';
+import Contact from './pages/Contact';
 
 function App() {
   return (
@@ -30,6 +33,7 @@ function App() {
             <Route path="reporting" element={<Reporting />} />
             <Route path="settings" element={<Settings />} />
             <Route path="transfer" element={<Transfer />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
           
           {/* Customer Portal Routes */}
@@ -37,6 +41,8 @@ function App() {
           <Route path="/shop/product/:id" element={<ProductDetail />} />
           <Route path="/shop/cart" element={<Cart />} />
           <Route path="/shop/checkout" element={<Checkout />} />
+          <Route path="/shop/wishlist" element={<Wishlist />} />
+          <Route path="/shop/contact" element={<Contact />} />
         </Routes>
       </div>
     </Router>
