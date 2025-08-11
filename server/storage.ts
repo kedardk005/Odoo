@@ -65,14 +65,21 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
-    // Create sample categories
+    // Create real categories
     const photoCategory: Category = {
       id: randomUUID(),
       name: "Photography Equipment",
       description: "Professional cameras, lenses, and accessories",
       createdAt: new Date(),
     };
-    
+
+    const constructionCategory: Category = {
+      id: randomUUID(),
+      name: "Construction Tools",
+      description: "Heavy machinery and construction equipment",
+      createdAt: new Date(),
+    };
+
     const audioCategory: Category = {
       id: randomUUID(),
       name: "Audio Equipment",
@@ -87,58 +94,204 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     };
 
+    const eventCategory: Category = {
+      id: randomUUID(),
+      name: "Event Equipment",
+      description: "Tables, chairs, tents, and event supplies",
+      createdAt: new Date(),
+    };
+
     this.categories.set(photoCategory.id, photoCategory);
+    this.categories.set(constructionCategory.id, constructionCategory);
     this.categories.set(audioCategory.id, audioCategory);
+    this.categories.set(eventCategory.id, eventCategory);
     this.categories.set(lightingCategory.id, lightingCategory);
 
-    // Create sample products
+    // Create real professional equipment products
     const products: Product[] = [
+      // Photography Equipment
       {
         id: randomUUID(),
         name: "Canon EOS R5",
-        description: "Professional full-frame mirrorless camera",
+        description: "Professional full-frame mirrorless camera with 45MP sensor",
         categoryId: photoCategory.id,
-        dailyRate: "89.00",
-        weeklyRate: "500.00",
-        monthlyRate: "1800.00",
-        securityDeposit: "2000.00",
+        dailyRate: "2500.00",
+        weeklyRate: "15000.00",
+        monthlyRate: "50000.00",
+        securityDeposit: "80000.00",
         quantity: 3,
         availableQuantity: 2,
         status: "available",
         imageUrl: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-        specifications: "45MP full-frame sensor, 8K video recording",
+        specifications: "45MP full-frame sensor, 8K video recording, dual pixel autofocus",
         createdAt: new Date(),
       },
+      {
+        id: randomUUID(),
+        name: "Sony A7 IV",
+        description: "Versatile full-frame mirrorless camera for professionals",
+        categoryId: photoCategory.id,
+        dailyRate: "2200.00",
+        weeklyRate: "13000.00",
+        monthlyRate: "45000.00",
+        securityDeposit: "75000.00",
+        quantity: 4,
+        availableQuantity: 3,
+        status: "available",
+        imageUrl: "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        specifications: "33MP sensor, 4K 60p video, 5-axis stabilization",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        name: "Canon 24-70mm f/2.8L",
+        description: "Professional zoom lens for versatile photography",
+        categoryId: photoCategory.id,
+        dailyRate: "800.00",
+        weeklyRate: "4500.00",
+        monthlyRate: "15000.00",
+        securityDeposit: "25000.00",
+        quantity: 6,
+        availableQuantity: 5,
+        status: "available",
+        imageUrl: "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        specifications: "Constant f/2.8 aperture, weather sealed, image stabilization",
+        createdAt: new Date(),
+      },
+      
+      // Audio Equipment
       {
         id: randomUUID(),
         name: "Audio-Technica AT2020",
         description: "Professional studio condenser microphone",
         categoryId: audioCategory.id,
-        dailyRate: "35.00",
-        weeklyRate: "200.00",
-        monthlyRate: "600.00",
-        securityDeposit: "300.00",
-        quantity: 5,
-        availableQuantity: 4,
+        dailyRate: "300.00",
+        weeklyRate: "1800.00",
+        monthlyRate: "6000.00",
+        securityDeposit: "8000.00",
+        quantity: 8,
+        availableQuantity: 6,
         status: "available",
         imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-        specifications: "Cardioid polar pattern, 144 dB SPL maximum",
+        specifications: "Cardioid polar pattern, 144 dB SPL maximum, low self-noise",
         createdAt: new Date(),
       },
       {
         id: randomUUID(),
-        name: "Godox SL-60W",
-        description: "LED video light with Bowens mount",
+        name: "Shure SM7B",
+        description: "Dynamic microphone for broadcast and recording",
+        categoryId: audioCategory.id,
+        dailyRate: "450.00",
+        weeklyRate: "2500.00",
+        monthlyRate: "8500.00",
+        securityDeposit: "12000.00",
+        quantity: 5,
+        availableQuantity: 4,
+        status: "available",
+        imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        specifications: "Dynamic cardioid, built-in pop filter, excellent for vocals",
+        createdAt: new Date(),
+      },
+      
+      // Lighting Equipment
+      {
+        id: randomUUID(),
+        name: "Godox SL-60W LED Light",
+        description: "Professional LED continuous light with Bowens mount",
         categoryId: lightingCategory.id,
-        dailyRate: "45.00",
-        weeklyRate: "250.00",
-        monthlyRate: "800.00",
-        securityDeposit: "400.00",
+        dailyRate: "400.00",
+        weeklyRate: "2200.00",
+        monthlyRate: "7500.00",
+        securityDeposit: "10000.00",
+        quantity: 8,
+        availableQuantity: 6,
+        status: "available",
+        imageUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        specifications: "60W LED, 5600K color temperature, remote control, quiet fan",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        name: "Aputure 300d Mark II",
+        description: "High-power LED light for professional filming",
+        categoryId: lightingCategory.id,
+        dailyRate: "1200.00",
+        weeklyRate: "7000.00",
+        monthlyRate: "24000.00",
+        securityDeposit: "35000.00",
         quantity: 4,
         availableQuantity: 3,
         status: "available",
         imageUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-        specifications: "60W LED, 5600K color temperature, remote control",
+        specifications: "300W COB LED, 5500K daylight balanced, wireless control",
+        createdAt: new Date(),
+      },
+      
+      // Construction Equipment
+      {
+        id: randomUUID(),
+        name: "Makita DHP482 Drill",
+        description: "Professional cordless hammer drill for construction",
+        categoryId: constructionCategory.id,
+        dailyRate: "200.00",
+        weeklyRate: "1200.00",
+        monthlyRate: "4000.00",
+        securityDeposit: "6000.00",
+        quantity: 10,
+        availableQuantity: 8,
+        status: "available",
+        imageUrl: "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        specifications: "18V battery, 62Nm torque, 13mm chuck, LED work light",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        name: "Angle Grinder 125mm",
+        description: "Heavy duty angle grinder for cutting and grinding",
+        categoryId: constructionCategory.id,
+        dailyRate: "150.00",
+        weeklyRate: "900.00",
+        monthlyRate: "3000.00",
+        securityDeposit: "4500.00",
+        quantity: 12,
+        availableQuantity: 10,
+        status: "available",
+        imageUrl: "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        specifications: "125mm disc, 11000 RPM, safety guard, vibration control",
+        createdAt: new Date(),
+      },
+      
+      // Event Equipment
+      {
+        id: randomUUID(),
+        name: "Round Dining Table",
+        description: "Premium round table seating 8 people for events",
+        categoryId: eventCategory.id,
+        dailyRate: "120.00",
+        weeklyRate: "700.00",
+        monthlyRate: "2400.00",
+        securityDeposit: "3000.00",
+        quantity: 20,
+        availableQuantity: 18,
+        status: "available",
+        imageUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        specifications: "150cm diameter, seats 8, white tablecloth included",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        name: "Chiavari Chairs (Gold)",
+        description: "Elegant gold Chiavari chairs for premium events",
+        categoryId: eventCategory.id,
+        dailyRate: "25.00",
+        weeklyRate: "140.00",
+        monthlyRate: "480.00",
+        securityDeposit: "800.00",
+        quantity: 100,
+        availableQuantity: 95,
+        status: "available",
+        imageUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        specifications: "Gold finish, cushioned seat, stackable design",
         createdAt: new Date(),
       },
     ];
