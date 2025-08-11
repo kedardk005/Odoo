@@ -23,6 +23,8 @@ import CustomerHome from "@/pages/customer/home";
 import CustomerProducts from "@/pages/customer/products";
 import CustomerCart from "@/pages/customer/cart";
 import CustomerCheckout from "@/pages/customer/checkout";
+import ProductDetails from "@/pages/customer/product-details";
+import QuotationRequest from "@/pages/customer/quotation-request";
 
 // New Admin Pages
 import AdminQuotations from "@/pages/admin/quotations";
@@ -49,7 +51,9 @@ function Router() {
       {/* Customer Routes */}
       <Route path="/customer/home" component={CustomerHome} />
       <Route path="/customer/products" component={CustomerProducts} />
+      <Route path="/customer/products/:id" component={ProductDetails} />
       <Route path="/customer/cart" component={CustomerCart} />
+      <Route path="/customer/quotation" component={QuotationRequest} />
       <Route path="/customer/checkout" component={CustomerCheckout} />
       
       {/* Fallback */}

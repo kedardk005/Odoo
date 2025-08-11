@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { storage } from "./storage";
-import { sendEmail, emailTemplates } from "./email";
+// Email service is imported dynamically to avoid dependency issues
 import { insertUserSchema, insertProductSchema, insertCategorySchema, insertOrderSchema, insertOrderItemSchema, insertDeliverySchema, insertPaymentSchema, insertNotificationSchema } from "@shared/schema";
 
 // Initialize Razorpay
@@ -373,8 +373,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/quotations", async (req, res) => {
     try {
       const quotation = await storage.createQuotation(req.body);
+      
+      // Create quotation items
+      for (const item of req.body.items || []) {
+        await storage.createQuotationItem({
+          quotationId: quotation.id,
+          ...item,
+        });
+      }
+      
+      // Send email notification
+      const customer = await storage.getUser(quotation.customerId);
+      if (customer) {
+        const quotationWithDetails = await storage.getQuotation(quotation.id);
+        if (quotationWithDetails) {
+          const { emailService } = await import('./email');
+          await emailService.sendQuotationEmail(quotationWithDetails, customer);
+        }
+      }
+      
       res.status(201).json(quotation);
     } catch (error: any) {
+      console.error("Error creating quotation:", error);
       res.status(400).json({ message: error.message });
     }
   });

@@ -115,6 +115,14 @@ export default function NavigationHeader({ userType, currentUser }: NavigationHe
                     <Package className="w-4 h-4" />
                     <span>Equipment</span>
                   </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setLocation("/customer/quotation")}
+                    className="flex items-center space-x-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Request Quote</span>
+                  </Button>
                 </>
               ) : (
                 <>

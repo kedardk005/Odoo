@@ -1,0 +1,123 @@
+1. User (Customer) Flow
+1.1. Browsing & Product Selection
+User visits the website portal.
+Browses available rentable products with details including:
+Product description, images.
+Rental units (per hour, day, week).(do proper calculation of the amount and calculation of the durations)
+Availability calendar or list view showing open dates to avoid booking conflicts.
+Filters products by type, price, availability, or promotions.
+1.2. Rental Duration & Pricing
+User selects rental start date and end date/time.
+The system automatically calculates rental price based on selected duration and applicable pricelist (hourly/daily/weekly rates, discounts).
+User sees pricing breakdown with possible discounts or promotions applied.
+1.3. Create & Review Rental Quotation
+User adds selected products and rental duration to a rental quotation.
+User reviews the quotation:
+Product list with rental periods.
+Total price including deposits, taxes, fees.
+User can edit products, rental duration, and quantities before confirming.
+1.4. Confirm Rental Order and Payment
+User confirms the quotation to convert it into a rental order.
+User chooses payment option:
+Full upfront payment.
+Partial payment or security deposit.
+System processes online payment securely.
+Order is confirmed and items are reserved in the system.
+User receives confirmation email and portal notification with rental details.mail should be working and generate the pdf invoice of the rental
+1.5. Pickup / Delivery Scheduling
+System sends a reminder to the user N days before the scheduled pickup or delivery.
+User can update delivery address if applicable.
+User either:
+Picks up rented items from the rental location.
+Receives items via delivery arranged by the rental company.
+1.6. During Rental Period
+User receives automated reminders as return date approaches.
+User can extend rental or request changes via customer service or portal (if allowed).
+1.7. Product Return
+User returns items on the agreed date or arranges for company pickup.
+System generates and sends a return document/checklist to guide product handover.
+User receives notification confirming the return.
+1.8. Invoicing & Late Fees (If Any)
+User receives final invoice including any late fees or additional charges.
+User can pay outstanding amounts via the portal.
+Payment history and receipts are accessible anytime from the customer dashboard.
+1.9. Customer Dashboard
+User views:
+Current rentals and status.
+Past rental history.
+Downloadable invoices and reports.
+Notifications and alerts.
+Option to leave feedback or request support.
+2. Admin (Rental Manager) Flow
+2.1. Product Management
+Admin defines rentable products:
+Marks products as rentable.
+Sets rental units (per hour, day, week).
+Sets available quantities (stock).
+Uploads detailed descriptions and images.
+Admin configures product availability calendar to avoid overbooking.
+2.2. Pricelist Management
+Admin creates multiple pricelists:
+By customer type (corporate, VIP).
+By region or rental duration.
+Seasonal and promotional pricing with date ranges.
+Pricing rules include:
+Hourly, daily, weekly rates.
+Percentage or fixed discounts.
+Automatic switching of rates based on rental duration.
+2.3. Quotation & Order Management
+Admin views rental quotations submitted by customers.
+Admin can edit, approve, or reject quotations.
+Converts confirmed quotations into rental orders.
+Manages orders’ lifecycle with states: draft → confirmed → delivered → returned.
+Tracks reserved inventory per order and blocks unavailable stock.
+2.4. Pickup & Delivery Scheduling
+System auto-generates pickup/delivery documents based on orders.
+Admin assigns pickup/delivery teams and schedules precise timing.
+Updates inventory status upon product handover or return.
+Ensures stock records reflect real-time product location.
+2.5. Notifications & Alerts
+System sends configurable reminders to:
+Customers (pickup, return reminders).
+Internal teams (pickup, delivery alerts).
+Admin can customize notification lead times (N days before event).
+Alerts on late returns trigger notifications and late fee calculations.
+2.6. Returns & Late Fees Handling
+Admin monitors return schedules.
+For late returns:
+System automatically calculates late fees as per predefined rules.
+Fees included in final invoice.
+Admin oversees collection of returned items and updates stock.
+2.7. Invoicing & Payment Tracking
+Admin creates and manages invoices:
+Full upfront payments.
+Partial payments or deposits.
+Charges for late returns or damages.
+Tracks all payment transactions and outstanding balances.
+Sends payment reminders for dues.
+2.8. Reports & Dashboards
+Admin accesses real-time dashboards and reports, including:
+Most rented products.
+Total rental revenue over chosen periods.
+Top customers (based on orders or revenue).
+Late return statistics.
+Reports are exportable in PDF, XLSX, or CSV format for further analysis or sharing.
+3. General System Features
+3.1. User Authentication & Roles
+Customers register/login to a secure portal.
+Admins access a separate dashboard with management controls.
+Role-based access ensures security and data privacy.
+3.2. Backend Inventory Control
+Real-time inventory tracking prevents double booking.
+Stock moves are logged during pickup and return.
+3.3. Customizable Settings
+Admins can configure:
+Notification lead times.
+Pricing rules.
+Late fee structures.
+Rental duration units and limits.
+3.4. Integration Points
+The system integrates with:
+Payment gateways for online transactions.
+Email/SMS APIs for notifications.
+Accounting modules for invoicing and reporting
