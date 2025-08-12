@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+// import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import NavigationHeader from "@/components/NavigationHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Filter, Plus, Package, Grid, List, Edit, Trash2, Eye } from "lucide-react";
@@ -16,16 +16,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().min(1, "Description is required"),
   categoryId: z.string().min(1, "Category is required"),
-  hourlyRate: z.string().min(1, "Hourly rate is required"),
+  hourlyRate: z.string().optional(),
   dailyRate: z.string().min(1, "Daily rate is required"),
-  weeklyRate: z.string().min(1, "Weekly rate is required"),
-  monthlyRate: z.string().min(1, "Monthly rate is required"),
+  weeklyRate: z.string().optional(),
+  monthlyRate: z.string().optional(),
   securityDeposit: z.string().min(1, "Security deposit is required"),
+  quantity: z.string().min(1, "Quantity is required").default("1"),
   status: z.enum(["available", "rented", "maintenance"]),
   imageUrl: z.string().optional(),
 });
@@ -36,16 +38,50 @@ export default function Products() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ["/api/products"],
-  });
+  // Fetch products and categories
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        fetch("/api/products", { credentials: "include", cache: "no-store" }),
+        fetch("/api/categories", { credentials: "include", cache: "no-store" })
+      ]);
+      
+      if (productsResponse.ok) {
+        const productsData = await productsResponse.json();
+        setProducts(productsData);
+      }
+      
+      if (categoriesResponse.ok) {
+        const categoriesData = await categoriesResponse.json();
+        setCategories(categoriesData);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["/api/categories"],
-  });
+  // Load data on component mount
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const form = useForm({
     resolver: zodResolver(productSchema),
@@ -58,35 +94,97 @@ export default function Products() {
       weeklyRate: "",
       monthlyRate: "",
       securityDeposit: "",
+      quantity: "1",
       status: "available" as const,
       imageUrl: "",
     },
   });
 
-  const createProductMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof productSchema>) => {
-      return apiRequest("POST", "/api/products", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Product Created",
-        description: "Product has been added successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+  const createProduct = async (data: z.infer<typeof productSchema>) => {
+    setIsCreating(true);
+    try {
+      await apiRequest("POST", "/api/products", data);
+      toast({ title: "Product Created", description: "Product has been added successfully" });
+      await fetchData();
       setIsAddModalOpen(false);
       form.reset();
-    },
-    onError: (error: any) => {
+    } catch (error: any) {
+      console.error('❌ Product creation error:', error);
+      let errorMessage = error?.message || "Failed to create product";
+      if (error?.details && Array.isArray(error.details)) {
+        errorMessage += ": " + error.details.map((d: any) => d.message).join(", ");
+      }
+      toast({ title: "Product Creation Failed", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const updateProduct = async (id: string, data: Partial<z.infer<typeof productSchema>>) => {
+    setIsUpdating(true);
+    try {
+      await apiRequest("PUT", `/api/products/${id}`, data);
+      toast({ title: "Product Updated", description: "Changes saved successfully" });
+      await fetchData();
+      setIsEditModalOpen(false);
+      setSelectedProduct(null);
+    } catch (error: any) {
+      toast({ title: "Update Failed", description: error?.message || "Could not update product", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    if (!confirm("Delete this product? This action cannot be undone.")) return;
+    setIsDeleting(id);
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete product');
+      toast({ title: 'Deleted', description: 'Product deleted successfully' });
+      await fetchData();
+    } catch (error: any) {
+      toast({ title: 'Delete failed', description: error?.message || 'Could not delete product', variant: 'destructive' });
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  const onSubmit = async (data: z.infer<typeof productSchema>) => {
+    console.log('🚀 Form submitted with data:', data);
+    
+    // Convert and validate string values to numbers for the API
+    const formattedData = {
+      ...data,
+      hourlyRate: data.hourlyRate ? parseFloat(data.hourlyRate) : undefined,
+      dailyRate: parseFloat(data.dailyRate),
+      weeklyRate: data.weeklyRate ? parseFloat(data.weeklyRate) : undefined,
+      monthlyRate: data.monthlyRate ? parseFloat(data.monthlyRate) : undefined,
+      securityDeposit: parseFloat(data.securityDeposit),
+      quantity: parseInt(data.quantity),
+    };
+
+    // Validate the parsed numbers
+    if (isNaN(formattedData.dailyRate) || formattedData.dailyRate <= 0) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create product",
+        title: "Validation Error",
+        description: "Daily rate must be a valid positive number",
         variant: "destructive",
       });
-    },
-  });
+      return;
+    }
 
-  const onSubmit = (data: z.infer<typeof productSchema>) => {
-    createProductMutation.mutate(data);
+    if (isNaN(formattedData.securityDeposit) || formattedData.securityDeposit < 0) {
+      toast({
+        title: "Validation Error", 
+        description: "Security deposit must be a valid non-negative number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('✅ Formatted data for API:', formattedData);
+    await createProduct(formattedData);
   };
 
   const filteredProducts = products.filter((product: any) => {
@@ -119,6 +217,9 @@ export default function Products() {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
+                <DialogDescription>
+                  Create a new product with rental rates and details.
+                </DialogDescription>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -182,9 +283,9 @@ export default function Products() {
                       name="hourlyRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Hourly Rate (₹)</FormLabel>
+                          <FormLabel>Hourly Rate (₹) <span className="text-sm text-gray-500">(Optional)</span></FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0.00" {...field} />
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -195,9 +296,9 @@ export default function Products() {
                       name="dailyRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Daily Rate (₹)</FormLabel>
+                          <FormLabel>Daily Rate (₹) <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0.00" {...field} />
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -211,9 +312,9 @@ export default function Products() {
                       name="weeklyRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Weekly Rate (₹)</FormLabel>
+                          <FormLabel>Weekly Rate (₹) <span className="text-sm text-gray-500">(Optional)</span></FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0.00" {...field} />
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -224,9 +325,9 @@ export default function Products() {
                       name="monthlyRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Monthly Rate (₹)</FormLabel>
+                          <FormLabel>Monthly Rate (₹) <span className="text-sm text-gray-500">(Optional)</span></FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0.00" {...field} />
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -234,15 +335,28 @@ export default function Products() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="securityDeposit"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Security Deposit (₹)</FormLabel>
+                          <FormLabel>Security Deposit (₹) <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0.00" {...field} />
+                            <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity <span className="text-red-500">*</span></FormLabel>
+                          <FormControl>
+                            <Input type="number" min="1" placeholder="1" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -277,9 +391,12 @@ export default function Products() {
                     name="imageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Image URL (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://..." {...field} />
+                          <ImageUpload
+                            value={field.value}
+                            onChange={(url) => field.onChange(url)}
+                            disabled={isCreating}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -294,8 +411,8 @@ export default function Products() {
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={createProductMutation.isPending}>
-                      {createProductMutation.isPending ? "Creating..." : "Create Product"}
+                    <Button type="submit" disabled={isCreating}>
+                      {isCreating ? "Creating..." : "Create Product"}
                     </Button>
                   </div>
                 </form>
@@ -434,13 +551,27 @@ export default function Products() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" onClick={() => {
+                              setSelectedProduct(product);
+                              setIsEditModalOpen(true);
+                              // Prefill form values for edit
+                              form.reset({
+                                name: product.name || "",
+                                description: product.description || "",
+                                categoryId: product.categoryId || "",
+                                hourlyRate: product.hourlyRate?.toString?.() || "",
+                                dailyRate: product.dailyRate?.toString?.() || "",
+                                weeklyRate: product.weeklyRate?.toString?.() || "",
+                                monthlyRate: product.monthlyRate?.toString?.() || "",
+                                securityDeposit: product.securityDeposit?.toString?.() || "",
+                                quantity: product.quantity?.toString?.() || "1",
+                                status: product.status || "available",
+                                imageUrl: product.imageUrl || "",
+                              });
+                            }}>
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={() => deleteProduct(product.id)} disabled={isDeleting === product.id}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -480,11 +611,23 @@ export default function Products() {
                         </Badge>
                       </div>
                       <div className="flex space-x-2 pt-2">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => {
+                          setSelectedProduct(product);
+                          setIsEditModalOpen(true);
+                          form.reset({
+                            name: product.name || "",
+                            description: product.description || "",
+                            categoryId: product.categoryId || "",
+                            hourlyRate: product.hourlyRate?.toString?.() || "",
+                            dailyRate: product.dailyRate?.toString?.() || "",
+                            weeklyRate: product.weeklyRate?.toString?.() || "",
+                            monthlyRate: product.monthlyRate?.toString?.() || "",
+                            securityDeposit: product.securityDeposit?.toString?.() || "",
+                            quantity: product.quantity?.toString?.() || "1",
+                            status: product.status || "available",
+                            imageUrl: product.imageUrl || "",
+                          });
+                        }}>
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>

@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { RealtimeNotifications } from "@/components/ui/realtime-notifications";
 import { 
   Home, 
   Package, 
@@ -77,39 +78,12 @@ export function NavigationHeader() {
 
           {/* Right side */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative">
-                  <Bell className="w-5 h-5" />
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center"
-                  >
-                    3
-                  </Badge>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <div className="p-2">
-                  <h3 className="font-semibold text-sm mb-2">Notifications</h3>
-                  <div className="space-y-2">
-                    <DropdownMenuItem className="flex-col items-start p-3">
-                      <div className="font-medium text-sm">New order received</div>
-                      <div className="text-xs text-gray-500">Order #ORD-2024-001 requires attention</div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex-col items-start p-3">
-                      <div className="font-medium text-sm">Equipment returned</div>
-                      <div className="text-xs text-gray-500">Camera kit returned by John Doe</div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex-col items-start p-3">
-                      <div className="font-medium text-sm">Payment received</div>
-                      <div className="text-xs text-gray-500">₹5,000 payment processed successfully</div>
-                    </DropdownMenuItem>
-                  </div>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Real-time Notifications */}
+            <RealtimeNotifications 
+              userId="admin-user-id"
+              isAdmin={true}
+              className="mr-2"
+            />
 
             {/* Profile Menu */}
             <DropdownMenu>

@@ -23,12 +23,19 @@ import CustomerHome from "@/pages/customer/home";
 import CustomerProducts from "@/pages/customer/products";
 import CustomerCart from "@/pages/customer/cart";
 import CustomerCheckout from "@/pages/customer/checkout";
+import CustomerOrders from "@/pages/customer/orders";
+import CustomerQuotations from "@/pages/customer/quotations";
 import ProductDetails from "@/pages/customer/product-details";
 import QuotationRequest from "@/pages/customer/quotation-request";
+
+// Profile Page
+import Profile from "@/pages/profile";
 
 // New Admin Pages
 import AdminQuotations from "@/pages/admin/quotations";
 import AdminPricing from "@/pages/admin/pricing";
+import { EnhancedAdminDashboard } from "@/pages/admin/enhanced-dashboard";
+import { EnhancedProductsPage } from "@/pages/admin/enhanced-products";
 
 function Router() {
   return (
@@ -41,7 +48,9 @@ function Router() {
       <Route path="/admin" component={AdminHome} />
       <Route path="/admin/home" component={AdminHome} />
       <Route path="/admin/dashboard" component={Dashboard} />
+      <Route path="/admin/enhanced-dashboard" component={EnhancedAdminDashboard} />
       <Route path="/admin/products" component={Products} />
+      <Route path="/admin/enhanced-products" component={EnhancedProductsPage} />
       <Route path="/admin/orders" component={Orders} />
       <Route path="/admin/customers" component={Customers} />
       <Route path="/admin/quotations" component={AdminQuotations} />
@@ -50,12 +59,23 @@ function Router() {
       <Route path="/admin/checkout" component={Checkout} />
       
       {/* Customer Routes */}
+      <Route path="/customer" component={CustomerHome} />
       <Route path="/customer/home" component={CustomerHome} />
       <Route path="/customer/products" component={CustomerProducts} />
       <Route path="/customer/products/:id" component={ProductDetails} />
+      <Route path="/customer/orders" component={CustomerOrders} />
+      <Route path="/customer/quotations" component={CustomerQuotations} />
       <Route path="/customer/cart" component={CustomerCart} />
       <Route path="/customer/quotation" component={QuotationRequest} />
       <Route path="/customer/checkout" component={CustomerCheckout} />
+      <Route path="/customer/profile" component={Profile} />
+      
+      {/* Profile Routes */}
+      <Route path="/profile" component={Profile} />
+      
+      {/* Public Product Routes */}
+      <Route path="/products" component={CustomerProducts} />
+      <Route path="/products/:id" component={ProductDetails} />
       
       {/* Fallback */}
       <Route component={NotFound} />

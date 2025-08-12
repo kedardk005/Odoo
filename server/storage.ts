@@ -9,7 +9,7 @@ import {
   type DashboardMetrics, type ReportData
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, like, ilike, sql, gte, lte, between, sum, count } from "drizzle-orm";
+import { eq, desc, and, or, like, ilike, sql, gte, lte, between, sum, count } from "drizzle-orm";
 import { 
   users, categories, products, orders, orderItems, deliveries, payments, notifications,
   quotations, quotationItems, customerSegments, pricingRules, lateFeeConfig, productReservations
@@ -34,6 +34,7 @@ export interface IStorage {
   getProduct(id: string): Promise<ProductWithCategory | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product>;
+  deleteProduct(id: string): Promise<Product>;
 
   // Order operations
   getOrders(customerId?: string): Promise<Order[]>;
@@ -64,6 +65,8 @@ export interface IStorage {
   // Quotation operations
   getQuotations(customerId?: string): Promise<Quotation[]>;
   getQuotation(id: string): Promise<Quotation | undefined>;
+  getQuotationsByCustomer(customerId: string): Promise<Quotation[]>;
+  getQuotationItems(quotationId: string): Promise<QuotationItem[]>;
   createQuotation(quotation: InsertQuotation): Promise<Quotation>;
   createQuotationItem(quotationItem: InsertQuotationItem): Promise<QuotationItem>;
   updateQuotationStatus(id: string, status: string): Promise<Quotation>;
@@ -79,8 +82,11 @@ export interface IStorage {
   markNotificationRead(id: string): Promise<Notification>;
 
   // Pricing rules operations
-  getPricingRules(): Promise<PricingRule[]>;
+  getPricingRules(productId?: string, categoryId?: string): Promise<PricingRule[]>;
   createPricingRule(rule: InsertPricingRule): Promise<PricingRule>;
+
+  // Product availability check
+  checkProductAvailability(productId: string, startDate: Date, endDate: Date, quantity: number): Promise<{ available: boolean; availableQuantity: number; }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -199,6 +205,14 @@ export class DatabaseStorage implements IStorage {
   async updateProduct(id: string, productData: Partial<InsertProduct>): Promise<Product> {
     const [product] = await db.update(products).set(productData).where(eq(products.id, id)).returning();
     return product;
+  }
+
+  async deleteProduct(id: string): Promise<Product> {
+    const [deleted] = await db.delete(products).where(eq(products.id, id)).returning();
+    if (!deleted) {
+      throw new Error("Product not found");
+    }
+    return deleted;
   }
 
   // Order operations
@@ -341,6 +355,14 @@ export class DatabaseStorage implements IStorage {
     return quotationItem;
   }
 
+  async getQuotationsByCustomer(customerId: string): Promise<Quotation[]> {
+    return await db.select().from(quotations).where(eq(quotations.customerId, customerId)).orderBy(desc(quotations.createdAt));
+  }
+
+  async getQuotationItems(quotationId: string): Promise<QuotationItem[]> {
+    return await db.select().from(quotationItems).where(eq(quotationItems.quotationId, quotationId));
+  }
+
   async getQuotation(id: string): Promise<Quotation | undefined> {
     const [quotation] = await db.select().from(quotations).where(eq(quotations.id, id));
     return quotation;
@@ -409,13 +431,71 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Pricing rules operations
-  async getPricingRules(): Promise<PricingRule[]> {
-    return await db.select().from(pricingRules).orderBy(desc(pricingRules.createdAt));
+  async getPricingRules(productId?: string, categoryId?: string): Promise<PricingRule[]> {
+    let query = db.select().from(pricingRules).where(eq(pricingRules.isActive, true));
+    
+    if (productId) {
+      query = query.where(eq(pricingRules.productId, productId));
+    }
+    
+    if (categoryId) {
+      query = query.where(eq(pricingRules.categoryId, categoryId));
+    }
+    
+    return await query.orderBy(desc(pricingRules.createdAt));
   }
 
   async createPricingRule(ruleData: InsertPricingRule): Promise<PricingRule> {
     const [rule] = await db.insert(pricingRules).values(ruleData).returning();
     return rule;
+  }
+
+  // Product availability check
+  async checkProductAvailability(
+    productId: string, 
+    startDate: Date, 
+    endDate: Date, 
+    quantity: number
+  ): Promise<{ available: boolean; availableQuantity: number; }> {
+    // Get product information
+    const product = await this.getProduct(productId);
+    if (!product) {
+      return { available: false, availableQuantity: 0 };
+    }
+
+    // Check existing reservations for the date range
+    const conflictingReservations = await db
+      .select({
+        quantity: sum(productReservations.quantity)
+      })
+      .from(productReservations)
+      .where(
+        and(
+          eq(productReservations.productId, productId),
+          eq(productReservations.status, 'active'),
+          // Check for date overlap
+          or(
+            and(
+              gte(productReservations.startDate, startDate),
+              lte(productReservations.startDate, endDate)
+            ),
+            and(
+              gte(productReservations.endDate, startDate),
+              lte(productReservations.endDate, endDate)
+            ),
+            and(
+              lte(productReservations.startDate, startDate),
+              gte(productReservations.endDate, endDate)
+            )
+          )
+        )
+      );
+
+    const reservedQuantity = parseInt(conflictingReservations[0]?.quantity || '0');
+    const availableQuantity = product.availableQuantity - reservedQuantity;
+    const available = availableQuantity >= quantity;
+
+    return { available, availableQuantity };
   }
 }
 

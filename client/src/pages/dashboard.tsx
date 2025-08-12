@@ -4,6 +4,7 @@ import { MetricsCards } from "@/components/dashboard/metrics-cards";
 import { RecentOrders } from "@/components/dashboard/recent-orders";
 import { ProductGrid } from "@/components/products/product-grid";
 import { DeliveryScheduler } from "@/components/delivery/delivery-scheduler";
+import { RealtimeDemo } from "@/components/realtime-demo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -219,6 +220,11 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Real-time Demo Section */}
+        <div className="mt-8">
+          <RealtimeDemo />
         </div>
 
         {/* Delivery Management Section */}

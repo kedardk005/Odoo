@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+// import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Signup() {
@@ -28,6 +28,7 @@ export default function Signup() {
   const { toast } = useToast();
   const [accountType, setAccountType] = useState<"customer" | "business">("customer");
   const [formData, setFormData] = useState({
+    username: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -43,12 +44,13 @@ export default function Signup() {
     agreeToTerms: false
   });
 
-  const signupMutation = useMutation({
-    mutationFn: async (userData: any) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSignup = async (userData: typeof formData & { accountType: string; role: string }) => {
+    setIsSubmitting(true);
+    try {
       const response = await apiRequest("POST", "/api/auth/signup", userData);
-      return response;
-    },
-    onSuccess: (data) => {
+      
       toast({
         title: "Account Created Successfully!",
         description: "Welcome to RentPro. You can now log in to your account.",
@@ -60,25 +62,31 @@ export default function Signup() {
       } else {
         setLocation("/admin/home");
       }
-    },
-    onError: (error: any) => {
+    } catch (error: any) {
       toast({
         title: "Signup Failed",
         description: error.message || "Failed to create account. Please try again.",
         variant: "destructive",
       });
-    },
-  });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    console.log(`Updating ${field} to:`, value);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      console.log("New form data:", newData);
+      return newData;
+    });
   };
 
   const validateForm = () => {
-    const required = ["firstName", "lastName", "email", "phone", "password"];
+    const required = ["username", "firstName", "lastName", "email", "phone", "password"];
     if (accountType === "business") {
       required.push("companyName", "businessType");
     }
@@ -118,12 +126,25 @@ export default function Signup() {
     }
 
     const userData = {
-      ...formData,
-      accountType,
+      username: formData.username,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      companyName: formData.companyName,
+      businessType: formData.businessType,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      pincode: formData.pincode,
       role: accountType === "customer" ? "customer" : "admin"
     };
 
-    signupMutation.mutate(userData);
+    console.log("Form data:", formData);
+    console.log("User data being sent:", userData);
+
+    await handleSignup(userData);
   };
 
   return (
@@ -223,6 +244,21 @@ export default function Signup() {
                       value={formData.email}
                       onChange={(e) => handleInputChange("email", e.target.value)}
                       placeholder="john@example.com"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="username">Username *</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="username"
+                      value={formData.username}
+                      onChange={(e) => handleInputChange("username", e.target.value)}
+                      placeholder="johndoe123"
                       className="pl-10"
                       required
                     />
@@ -394,9 +430,9 @@ export default function Signup() {
                 type="submit"
                 className="w-full"
                 size="lg"
-                disabled={signupMutation.isPending}
+                disabled={isSubmitting}
               >
-                {signupMutation.isPending ? (
+                {isSubmitting ? (
                   <>
                     <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
                     Creating Account...

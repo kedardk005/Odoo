@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, DollarSign, Users, Calendar, Settings } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -145,6 +145,9 @@ export default function PricingPage() {
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>Create Pricing Rule</DialogTitle>
+                  <DialogDescription>
+                    Create a new pricing rule for products or categories.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>

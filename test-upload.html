@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Image Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .upload-area.dragover {
+            border-color: #007cba;
+            background-color: #f0f8ff;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        button {
+            background-color: #007cba;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        img {
+            max-width: 100%;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Test Cloudinary Image Upload</h1>
+    
+    <div class="upload-area" id="uploadArea">
+        <p>📸 Drop an image here or click to select</p>
+        <input type="file" id="fileInput" accept="image/*" />
+        <br>
+        <button onclick="uploadImage()" id="uploadBtn">Upload Image</button>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        let selectedFile = null;
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const result = document.getElementById('result');
+        
+        // File selection
+        fileInput.addEventListener('change', function(e) {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                uploadArea.querySelector('p').textContent = `Selected: ${selectedFile.name}`;
+            }
+        });
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                uploadArea.querySelector('p').textContent = `Selected: ${selectedFile.name}`;
+            }
+        });
+        
+        // Upload function
+        async function uploadImage() {
+            if (!selectedFile) {
+                result.innerHTML = '<div class="error">❌ Please select an image file first</div>';
+                return;
+            }
+            
+            if (!selectedFile.type.startsWith('image/')) {
+                result.innerHTML = '<div class="error">❌ Please select a valid image file</div>';
+                return;
+            }
+            
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+            result.innerHTML = '<div>⏳ Uploading image...</div>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+                
+                const response = await fetch('/api/products/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    result.innerHTML = `
+                        <div class="success">
+                            ✅ ${data.message}
+                            <br><strong>Image URL:</strong> <a href="${data.imageUrl}" target="_blank">${data.imageUrl}</a>
+                            <br><img src="${data.imageUrl}" alt="Uploaded image" style="max-width: 300px; margin-top: 10px;">
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `<div class="error">❌ Upload failed: ${data.message || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Upload failed: ${error.message}</div>`;
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Image';
+            }
+        }
+    </script>
+</body>
+</html>

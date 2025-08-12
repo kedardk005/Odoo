@@ -2,13 +2,19 @@ import nodemailer from 'nodemailer';
 import PDFDocument from 'pdfkit';
 import { Buffer } from 'buffer';
 
-// Create transporter
+// Create transporter using environment variables
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: process.env.MAIL_SERVICE || 'Gmail',
+  host: process.env.MAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.MAIL_PORT || process.env.SMTP_PORT || '587'),
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER || 'your-email@gmail.com',
-    pass: process.env.EMAIL_PASS || 'your-app-password',
+    user: process.env.MAIL_USER || process.env.SMTP_USER || 'skillmart.ce@gmail.com',
+    pass: process.env.MAIL_PASS || process.env.SMTP_PASS || '',
   },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 export interface OrderData {
@@ -232,3 +238,177 @@ export async function sendPaymentConfirmation(orderData: OrderData, paymentId: s
 
   return transporter.sendMail(mailOptions);
 }
+
+// Send return reminder email (N days before return)
+export async function sendReturnReminder(orderData: OrderData, daysRemaining: number) {
+  const mailOptions = {
+    from: process.env.MAIL_FROM || process.env.MAIL_USER || 'skillmart.ce@gmail.com',
+    to: orderData.customerEmail,
+    subject: `Return Reminder - ${orderData.orderNumber} (${daysRemaining} days remaining)`,
+    html: `
+      <h2>Return Reminder</h2>
+      <p>Dear ${orderData.customerName},</p>
+      <p>This is a friendly reminder that your rental period is ending soon.</p>
+      
+      <h3>Return Details:</h3>
+      <ul>
+        <li>Order Number: ${orderData.orderNumber}</li>
+        <li>Return Date: ${new Date(orderData.endDate).toLocaleDateString()}</li>
+        <li>Days Remaining: ${daysRemaining}</li>
+      </ul>
+      
+      <p>Please ensure all rented items are ready for pickup on the scheduled return date.</p>
+      <p>Late returns may incur additional fees as per our terms and conditions.</p>
+      
+      <p>Best regards,<br>RentPro Team</p>
+    `
+  };
+
+  return transporter.sendMail(mailOptions);
+}
+
+// Send overdue notification
+export async function sendOverdueNotification(orderData: OrderData, daysOverdue: number, lateFee: number) {
+  const mailOptions = {
+    from: process.env.MAIL_FROM || process.env.MAIL_USER || 'skillmart.ce@gmail.com',
+    to: orderData.customerEmail,
+    subject: `OVERDUE - ${orderData.orderNumber} (${daysOverdue} days overdue)`,
+    html: `
+      <h2 style="color: #e74c3c;">Overdue Notice</h2>
+      <p>Dear ${orderData.customerName},</p>
+      <p style="color: #e74c3c;">Your rental items are overdue and need to be returned immediately.</p>
+      
+      <h3>Overdue Details:</h3>
+      <ul>
+        <li>Order Number: ${orderData.orderNumber}</li>
+        <li>Original Return Date: ${new Date(orderData.endDate).toLocaleDateString()}</li>
+        <li>Days Overdue: ${daysOverdue}</li>
+        <li>Late Fee: ₹${lateFee}</li>
+      </ul>
+      
+      <p><strong>Please contact us immediately to arrange return and payment of late fees.</strong></p>
+      
+      <p>Best regards,<br>RentPro Team</p>
+    `
+  };
+
+  return transporter.sendMail(mailOptions);
+}
+
+// Send pickup/delivery notification
+export async function sendDeliveryNotification(
+  customerName: string, 
+  customerEmail: string, 
+  orderNumber: string, 
+  deliveryType: 'pickup' | 'return',
+  scheduledDate: string,
+  address: string
+) {
+  const mailOptions = {
+    from: process.env.MAIL_FROM || process.env.MAIL_USER || 'skillmart.ce@gmail.com',
+    to: customerEmail,
+    subject: `${deliveryType === 'pickup' ? 'Delivery' : 'Pickup'} Scheduled - ${orderNumber}`,
+    html: `
+      <h2>${deliveryType === 'pickup' ? 'Delivery' : 'Pickup'} Notification</h2>
+      <p>Dear ${customerName},</p>
+      <p>Your ${deliveryType === 'pickup' ? 'delivery' : 'pickup'} has been scheduled.</p>
+      
+      <h3>Details:</h3>
+      <ul>
+        <li>Order Number: ${orderNumber}</li>
+        <li>Scheduled Date: ${new Date(scheduledDate).toLocaleDateString()}</li>
+        <li>Address: ${address}</li>
+      </ul>
+      
+      <p>Please ensure someone is available at the scheduled time.</p>
+      
+      <p>Best regards,<br>RentPro Team</p>
+    `
+  };
+
+  return transporter.sendMail(mailOptions);
+}
+
+// Send internal notification to staff
+export async function sendInternalNotification(
+  subject: string,
+  message: string,
+  orderId?: string
+) {
+  const mailOptions = {
+    from: process.env.MAIL_FROM || process.env.MAIL_USER || 'skillmart.ce@gmail.com',
+    to: process.env.MAIL_FROM || process.env.MAIL_USER || 'skillmart.ce@gmail.com', // Send to admin
+    subject: `[Internal] ${subject}`,
+    html: `
+      <h2>Internal Notification</h2>
+      <p>${message}</p>
+      ${orderId ? `<p>Order ID: ${orderId}</p>` : ''}
+      
+      <p>RentPro System</p>
+    `
+  };
+
+  return transporter.sendMail(mailOptions);
+}
+
+// Email service class for better organization
+export class EmailService {
+  static async sendQuotationEmail(quotation: any, customer: any) {
+    const quotationData: QuotationData = {
+      quotationNumber: quotation.quotationNumber,
+      customerName: `${customer.firstName} ${customer.lastName}`,
+      customerEmail: customer.email,
+      items: quotation.items || [],
+      totalAmount: parseFloat(quotation.totalAmount),
+      startDate: quotation.startDate,
+      endDate: quotation.endDate,
+      validUntil: quotation.validUntil
+    };
+
+    return sendQuotationEmail(quotationData);
+  }
+
+  static async sendOrderConfirmationEmail(order: any, customer: any) {
+    const orderData: OrderData = {
+      orderNumber: order.orderNumber,
+      customerName: `${customer.firstName} ${customer.lastName}`,
+      customerEmail: customer.email,
+      items: order.items || [],
+      totalAmount: parseFloat(order.totalAmount),
+      startDate: order.startDate,
+      endDate: order.endDate
+    };
+
+    return sendOrderConfirmation(orderData);
+  }
+
+  static async sendReturnReminderEmail(order: any, customer: any, daysRemaining: number) {
+    const orderData: OrderData = {
+      orderNumber: order.orderNumber,
+      customerName: `${customer.firstName} ${customer.lastName}`,
+      customerEmail: customer.email,
+      items: order.items || [],
+      totalAmount: parseFloat(order.totalAmount),
+      startDate: order.startDate,
+      endDate: order.endDate
+    };
+
+    return sendReturnReminder(orderData, daysRemaining);
+  }
+
+  static async sendOverdueNotificationEmail(order: any, customer: any, daysOverdue: number, lateFee: number) {
+    const orderData: OrderData = {
+      orderNumber: order.orderNumber,
+      customerName: `${customer.firstName} ${customer.lastName}`,
+      customerEmail: customer.email,
+      items: order.items || [],
+      totalAmount: parseFloat(order.totalAmount),
+      startDate: order.startDate,
+      endDate: order.endDate
+    };
+
+    return sendOverdueNotification(orderData, daysOverdue, lateFee);
+  }
+}
+
+export const emailService = new EmailService();

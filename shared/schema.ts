@@ -24,8 +24,23 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   phone: text("phone"),
   address: text("address"),
+  city: text("city"),
+  state: text("state"),
+  pincode: text("pincode"),
+  dateOfBirth: text("date_of_birth"),
+  companyName: text("company_name"),
+  businessType: text("business_type"),
+  gstin: text("gstin"),
+  profilePicture: text("profile_picture"),
+  isEmailVerified: boolean("is_email_verified").default(false),
+  isPhoneVerified: boolean("is_phone_verified").default(false),
+  membershipLevel: text("membership_level").default("bronze"),
+  totalOrders: integer("total_orders").default(0),
+  totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).default("0.00"),
+  lastLoginAt: timestamp("last_login_at"),
   role: userRoleEnum("role").default("customer").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Product categories
@@ -209,6 +224,26 @@ export const productReservations = pgTable("product_reservations", {
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+  totalOrders: true,
+  totalSpent: true,
+  lastLoginAt: true,
+});
+
+export const updateUserProfileSchema = createInsertSchema(users).omit({
+  id: true,
+  username: true,
+  email: true,
+  password: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+  totalOrders: true,
+  totalSpent: true,
+  lastLoginAt: true,
+  isEmailVerified: true,
+  isPhoneVerified: true,
+  membershipLevel: true,
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
@@ -220,6 +255,19 @@ export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
   availableQuantity: true,
+}).extend({
+  // Override decimal fields to accept numbers and convert to strings
+  hourlyRate: z.union([z.string(), z.number()]).optional().transform(val => 
+    val !== undefined ? val.toString() : undefined
+  ),
+  dailyRate: z.union([z.string(), z.number()]).transform(val => val.toString()),
+  weeklyRate: z.union([z.string(), z.number()]).optional().transform(val => 
+    val !== undefined ? val.toString() : undefined
+  ),
+  monthlyRate: z.union([z.string(), z.number()]).optional().transform(val => 
+    val !== undefined ? val.toString() : undefined
+  ),
+  securityDeposit: z.union([z.string(), z.number()]).transform(val => val.toString()),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
@@ -280,6 +328,7 @@ export const insertProductReservationSchema = createInsertSchema(productReservat
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;

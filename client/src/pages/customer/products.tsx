@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Search, Filter, ShoppingCart, Calendar, Eye, Package, ArrowLeft } from "lucide-react";
@@ -240,6 +240,9 @@ export default function CustomerProducts() {
                     <DialogContent className="max-w-md">
                       <DialogHeader>
                         <DialogTitle>Rent {selectedProduct?.name}</DialogTitle>
+                        <DialogDescription>
+                          Select rental period, quantity, and dates for this item.
+                        </DialogDescription>
                       </DialogHeader>
                       
                       {selectedProduct && (
