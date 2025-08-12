@@ -69,7 +69,7 @@ export function RazorpayPayment({
 
       // Configure Razorpay options
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_4QjuyHe6sBhG9a",
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
         name: "RentPro - Equipment Rental",

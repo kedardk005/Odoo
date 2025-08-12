@@ -5,7 +5,7 @@ interface MetricsCardsProps {
   metrics: {
     totalRevenue: number;
     activeRentals: number;
-    newCustomers: number;
+    totalCustomers: number;
     pendingOrders: number;
   };
 }
@@ -45,8 +45,8 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
       icon: Package,
     },
     {
-      title: "New Customers",
-      value: (metrics.newCustomers || 0).toString(),
+      title: "Total Customers",
+      value: (metrics.totalCustomers || 0).toString(),
       change: "+8.1%",
       changeType: "positive" as const,
       icon: Users,

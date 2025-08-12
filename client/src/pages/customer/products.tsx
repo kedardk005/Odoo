@@ -12,12 +12,14 @@ import { Search, Filter, ShoppingCart, Calendar, Eye, Package, ArrowLeft } from 
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
+import NavigationHeader from "@/components/NavigationHeader";
 
 export default function CustomerProducts() {
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [rentalPeriod, setRentalPeriod] = useState("daily");
   const [quantity, setQuantity] = useState(1);
   const [startDate, setStartDate] = useState("");
@@ -58,7 +60,7 @@ export default function CustomerProducts() {
     
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
     let price = 0;
     if (rentalPeriod === "daily") {
@@ -84,12 +86,16 @@ export default function CustomerProducts() {
 
     const total = calculateTotal();
     const cartItem = {
-      product: selectedProduct,
+      id: selectedProduct.id,
+      name: selectedProduct.name,
+      imageUrl: selectedProduct.imageUrl,
       quantity,
       startDate,
       endDate,
-      rentalPeriod,
-      total
+      pricingType: rentalPeriod,
+      rate: getRentalPrice(selectedProduct),
+      totalAmount: total,
+      securityDeposit: parseFloat(selectedProduct.securityDeposit || "0")
     };
 
     // Store in localStorage for now
@@ -97,12 +103,21 @@ export default function CustomerProducts() {
     existingCart.push(cartItem);
     localStorage.setItem("rentalCart", JSON.stringify(existingCart));
 
+    // Dispatch storage event to update cart count
+    window.dispatchEvent(new Event("storage"));
+
     toast({
       title: "Added to Cart",
       description: `${selectedProduct.name} has been added to your cart`,
     });
 
     setSelectedProduct(null);
+    setIsDialogOpen(false);
+    // Reset form
+    setRentalPeriod("daily");
+    setQuantity(1);
+    setStartDate("");
+    setEndDate("");
   };
 
   const handleGoToCart = () => {
@@ -111,29 +126,15 @@ export default function CustomerProducts() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => setLocation("/")}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Button>
-              <div className="flex items-center space-x-2">
-                <Package className="h-6 w-6 text-primary" />
-                <h1 className="text-xl font-bold text-gray-900">Equipment Rental</h1>
-              </div>
-            </div>
-            <Button onClick={handleGoToCart}>
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              View Cart
-            </Button>
-          </div>
-        </div>
-      </div>
+      <NavigationHeader userType="customer" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Equipment Rental</h1>
+          <p className="text-gray-600 mt-2">Browse and rent professional equipment for your projects</p>
+        </div>
+
         {/* Filters */}
         <Card className="mb-8">
           <CardHeader>
@@ -227,11 +228,14 @@ export default function CustomerProducts() {
                     </div>
                   </div>
 
-                  <Dialog>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button 
                         className="w-full" 
-                        onClick={() => setSelectedProduct(product)}
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setIsDialogOpen(true);
+                        }}
                       >
                         <Calendar className="w-4 h-4 mr-2" />
                         Rent Now

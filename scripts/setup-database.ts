@@ -90,7 +90,7 @@ async function setupDatabase() {
         quantity INTEGER DEFAULT 1,
         available_quantity INTEGER DEFAULT 1,
         reserved_quantity INTEGER DEFAULT 0,
-        status VARCHAR DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'maintenance')),
+        status VARCHAR DEFAULT 'available' CHECK (status IN ('available', 'rented', 'maintenance', 'reserved')),
         image_url TEXT,
         specifications TEXT,
         min_rental_period INTEGER DEFAULT 1,

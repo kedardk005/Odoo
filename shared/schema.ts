@@ -116,8 +116,9 @@ export const orderItems = pgTable("order_items", {
   orderId: varchar("order_id").references(() => orders.id).notNull(),
   productId: varchar("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").notNull(),
-  dailyRate: decimal("daily_rate", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Deliveries table
@@ -142,9 +143,10 @@ export const payments = pgTable("payments", {
   orderId: varchar("order_id").references(() => orders.id).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   status: paymentStatusEnum("status").default("pending").notNull(),
-  paymentMethod: text("payment_method").notNull(),
+  paymentMethod: text("payment_method"),
+  paymentGateway: text("payment_gateway"),
   transactionId: text("transaction_id"),
-  paidAt: timestamp("paid_at"),
+  gatewayPaymentId: text("gateway_payment_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -272,12 +274,31 @@ export const insertProductSchema = createInsertSchema(products).omit({
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
-  orderNumber: true,
   createdAt: true,
+}).extend({
+  // Allow orderNumber to be provided
+  orderNumber: z.string().optional(),
+  // Override decimal fields to accept numbers and convert to strings
+  totalAmount: z.union([z.string(), z.number()]).transform(val => val.toString()),
+  securityDeposit: z.union([z.string(), z.number()]).transform(val => val.toString()),
+  paidAmount: z.union([z.string(), z.number()]).optional().transform(val => 
+    val !== undefined ? val.toString() : "0.00"
+  ),
+  remainingAmount: z.union([z.string(), z.number()]).optional().transform(val => 
+    val !== undefined ? val.toString() : "0.00"
+  ),
+  lateFee: z.union([z.string(), z.number()]).optional().transform(val => 
+    val !== undefined ? val.toString() : "0.00"
+  ),
 });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   id: true,
+  createdAt: true,
+}).extend({
+  // Override decimal fields to accept numbers and convert to strings
+  unitPrice: z.union([z.string(), z.number()]).transform(val => val.toString()),
+  totalAmount: z.union([z.string(), z.number()]).transform(val => val.toString()),
 });
 
 export const insertDeliverySchema = createInsertSchema(deliveries).omit({
@@ -288,6 +309,9 @@ export const insertDeliverySchema = createInsertSchema(deliveries).omit({
 export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
   createdAt: true,
+}).extend({
+  // Override decimal fields to accept numbers and convert to strings
+  amount: z.union([z.string(), z.number()]).transform(val => val.toString()),
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
@@ -297,12 +321,21 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 
 export const insertQuotationSchema = createInsertSchema(quotations).omit({
   id: true,
-  quotationNumber: true,
   createdAt: true,
+}).extend({
+  // Allow quotationNumber to be provided
+  quotationNumber: z.string().optional(),
+  // Override decimal fields to accept numbers and convert to strings
+  totalAmount: z.union([z.string(), z.number()]).transform(val => val.toString()),
+  securityDeposit: z.union([z.string(), z.number()]).transform(val => val.toString()),
 });
 
 export const insertQuotationItemSchema = createInsertSchema(quotationItems).omit({
   id: true,
+}).extend({
+  // Override decimal fields to accept numbers and convert to strings
+  rate: z.union([z.string(), z.number()]).transform(val => val.toString()),
+  totalAmount: z.union([z.string(), z.number()]).transform(val => val.toString()),
 });
 
 export const insertCustomerSegmentSchema = createInsertSchema(customerSegments).omit({
@@ -400,10 +433,12 @@ export type ProductWithAvailability = ProductWithCategory & {
 export type DashboardMetrics = {
   totalRevenue: number;
   activeRentals: number;
-  newCustomers: number;
+  totalCustomers: number; // total customers from DB
+  pendingOrders: number; // pending orders count
   inventoryUtilization: number;
   overdueOrders: number;
-  pendingQuotations: number;
+  pendingQuotations: number; // keep for compatibility
+  newCustomers?: number; // optional for backward-compat
 };
 
 export type ReportData = {

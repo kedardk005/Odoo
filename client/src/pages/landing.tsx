@@ -29,12 +29,8 @@ export default function Landing() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (loginData.role === "admin") {
-      setLocation("/admin/home");
-    } else {
-      setLocation("/customer/home");
-    }
+    // Redirect to dedicated login page
+    setLocation("/login");
   };
 
   const features = [

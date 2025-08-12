@@ -8,6 +8,11 @@ import NotFound from "@/pages/not-found";
 // Landing Page
 import Landing from "@/pages/landing";
 import Signup from "@/pages/signup";
+import Login from "@/pages/login";
+import TestCart from "@/pages/test-cart";
+import TestRazorpay from "@/pages/test-razorpay";
+import PaymentSuccess from "@/pages/customer/payment-success";
+import PaymentFailed from "@/pages/customer/payment-failed";
 
 // Admin Pages
 import AdminHome from "@/pages/admin/home";
@@ -43,6 +48,7 @@ function Router() {
       {/* Landing Page */}
       <Route path="/" component={Landing} />
       <Route path="/signup" component={Signup} />
+      <Route path="/login" component={Login} />
       
       {/* Admin Routes */}
       <Route path="/admin" component={AdminHome} />
@@ -68,6 +74,8 @@ function Router() {
       <Route path="/customer/cart" component={CustomerCart} />
       <Route path="/customer/quotation" component={QuotationRequest} />
       <Route path="/customer/checkout" component={CustomerCheckout} />
+      <Route path="/customer/payment-success" component={PaymentSuccess} />
+      <Route path="/customer/payment-failed" component={PaymentFailed} />
       <Route path="/customer/profile" component={Profile} />
       
       {/* Profile Routes */}
@@ -76,6 +84,10 @@ function Router() {
       {/* Public Product Routes */}
       <Route path="/products" component={CustomerProducts} />
       <Route path="/products/:id" component={ProductDetails} />
+      
+      {/* Test Routes */}
+      <Route path="/test-cart" component={TestCart} />
+      <Route path="/test-razorpay" component={TestRazorpay} />
       
       {/* Fallback */}
       <Route component={NotFound} />

@@ -49,7 +49,30 @@ export default function CustomerCheckout() {
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("rentalCart") || "[]");
-    setCartItems(cart);
+    
+    // Migrate cart items to ensure all required fields exist
+    const migratedCart = cart.map((item: any) => ({
+      ...item,
+      totalAmount: item.totalAmount || 0,
+      securityDeposit: item.securityDeposit || 0,
+      rate: item.rate || 0,
+      quantity: item.quantity || 1,
+    }));
+    
+    setCartItems(migratedCart);
+    
+    // Load user data if available
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+    if (userData.firstName) {
+      setCustomerDetails(prev => ({
+        ...prev,
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        address: userData.address || "",
+      }));
+    }
     
     // Load Razorpay script
     const script = document.createElement("script");
@@ -58,7 +81,9 @@ export default function CustomerCheckout() {
     document.body.appendChild(script);
     
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -69,14 +94,18 @@ export default function CustomerCheckout() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
       });
-      if (!response.ok) throw new Error("Failed to create order");
+      if (!response.ok) {
+        let detail = "";
+        try { detail = await response.text(); } catch {}
+        throw new Error(`Failed to create order: ${response.status} ${detail}`);
+      }
       return response.json();
     },
   });
 
   const createRazorpayOrderMutation = useMutation({
     mutationFn: async (paymentData: any) => {
-      const response = await fetch("/api/payments/razorpay/create-order", {
+      const response = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(paymentData),
@@ -88,7 +117,7 @@ export default function CustomerCheckout() {
 
   const verifyPaymentMutation = useMutation({
     mutationFn: async (verificationData: any) => {
-      const response = await fetch("/api/payments/razorpay/verify", {
+      const response = await fetch("/api/razorpay/verify-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(verificationData),
@@ -99,11 +128,11 @@ export default function CustomerCheckout() {
   });
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.totalAmount, 0);
+    return cartItems.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
   };
 
   const calculateSecurityDeposit = () => {
-    return cartItems.reduce((sum, item) => sum + (item.securityDeposit * item.quantity), 0);
+    return cartItems.reduce((sum, item) => sum + ((item.securityDeposit || 0) * item.quantity), 0);
   };
 
   const calculateTotal = () => {
@@ -139,9 +168,13 @@ export default function CustomerCheckout() {
     setIsProcessing(true);
 
     try {
+      // Get user data
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const customerId = userData.id || "guest-" + Date.now();
+
       // First create the order
       const orderData = {
-        customerId: "customer-temp-id", // In real app, get from auth
+        customerId,
         customerDetails,
         items: cartItems.map(item => ({
           productId: item.id,
@@ -162,15 +195,19 @@ export default function CustomerCheckout() {
       const razorpayOrderData = {
         amount: calculateTotal(),
         currency: "INR",
-        orderId: order.id,
-        customerDetails,
+        receipt: `order_${order.orderNumber}`,
+        notes: {
+          order_id: order.id,
+          customer_email: customerDetails.email,
+          customer_name: `${customerDetails.firstName} ${customerDetails.lastName}`,
+        },
       };
 
       const razorpayOrder = await createRazorpayOrderMutation.mutateAsync(razorpayOrderData);
 
       // Initialize Razorpay payment
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_4QjuyHe6sBhG9a",
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
         name: "RentPro Equipment Rental",
@@ -191,10 +228,14 @@ export default function CustomerCheckout() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              orderId: order.id,
+              order_id: order.id,
+              amount: calculateTotal(),
             };
 
             await verifyPaymentMutation.mutateAsync(verificationData);
+
+            // Store payment details for success page
+            localStorage.setItem("lastPaymentAmount", calculateTotal().toString());
 
             // Clear cart and redirect
             localStorage.removeItem("rentalCart");
@@ -202,10 +243,11 @@ export default function CustomerCheckout() {
 
             toast({
               title: "Payment Successful!",
-              description: `Your rental order ${order.orderNumber} has been confirmed. You will receive an email confirmation shortly.`,
+              description: `Your rental order ${order.orderNumber} has been confirmed.`,
             });
 
-            setLocation("/customer/home");
+            // Redirect to payment success page with details
+            setLocation(`/customer/payment-success?orderId=${order.id}&paymentId=${response.razorpay_payment_id}&orderNumber=${order.orderNumber}`);
           } catch (error) {
             console.error("Payment verification failed:", error);
             toast({
@@ -218,6 +260,23 @@ export default function CustomerCheckout() {
         modal: {
           ondismiss: function() {
             setIsProcessing(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "You cancelled the payment process. Your cart items are still saved.",
+              variant: "destructive",
+            });
+          }
+        },
+        error: {
+          callback: function(error: any) {
+            setIsProcessing(false);
+            console.error("Razorpay error:", error);
+            toast({
+              title: "Payment Error",
+              description: "There was an error processing your payment. Please try again.",
+              variant: "destructive",
+            });
+            setLocation("/customer/payment-failed");
           }
         }
       };
@@ -418,6 +477,18 @@ export default function CustomerCheckout() {
                       <p className="text-blue-700">
                         Equipment will be delivered on the start date or available for pickup.
                         Security deposit will be refunded after safe return of equipment.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <CreditCard className="w-5 h-5 text-green-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-green-900">Payment Method</p>
+                      <p className="text-green-700">
+                        Secure payment via Razorpay - supports UPI, Cards, Net Banking, and Wallets
                       </p>
                     </div>
                   </div>

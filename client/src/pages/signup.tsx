@@ -50,6 +50,15 @@ export default function Signup() {
     setIsSubmitting(true);
     try {
       const response = await apiRequest("POST", "/api/auth/signup", userData);
+      const created = await response.json();
+
+      // Persist user id for subsequent profile fetches
+      try {
+        localStorage.setItem("userId", created.id);
+      } catch {}
+      try {
+        sessionStorage.setItem("userId", created.id);
+      } catch {}
       
       toast({
         title: "Account Created Successfully!",

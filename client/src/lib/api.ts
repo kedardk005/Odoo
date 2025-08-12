@@ -98,6 +98,15 @@ export const api = {
     return response.json();
   },
 
+  async addCustomer(data: Partial<User>): Promise<User> {
+    const response = await apiRequest("POST", "/api/customers", data);
+    return response.json();
+  },
+
+  async deleteCustomer(id: string): Promise<void> {
+    await apiRequest("DELETE", `/api/customers/${id}`);
+  },
+
   // Delivery endpoints
   async getDeliveries(orderId?: string): Promise<Delivery[]> {
     const url = orderId ? `/api/deliveries?orderId=${orderId}` : "/api/deliveries";

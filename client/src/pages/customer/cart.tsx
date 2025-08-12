@@ -28,8 +28,44 @@ export default function CustomerCart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    const cart = JSON.parse(localStorage.getItem("rentalCart") || "[]");
-    setCartItems(cart);
+    const loadCart = () => {
+      try {
+        const cartData = localStorage.getItem("rentalCart") || "[]";
+        const cart = JSON.parse(cartData);
+        
+        // Migrate cart items to ensure all required fields exist
+        const migratedCart = cart.map((item: any) => ({
+          ...item,
+          totalAmount: item.totalAmount || 0,
+          securityDeposit: item.securityDeposit || 0,
+          rate: item.rate || 0,
+          quantity: item.quantity || 1,
+        }));
+        
+        // Save migrated cart back to localStorage if changes were made
+        if (JSON.stringify(cart) !== JSON.stringify(migratedCart)) {
+          localStorage.setItem("rentalCart", JSON.stringify(migratedCart));
+        }
+        
+        setCartItems(migratedCart);
+      } catch (error) {
+        console.error("Error loading cart:", error);
+        setCartItems([]);
+      }
+    };
+
+    loadCart();
+
+    // Listen for storage changes to update cart when items are added from other pages
+    const handleStorageChange = () => {
+      loadCart();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   const updateCart = (newCart: CartItem[]) => {
@@ -51,8 +87,25 @@ export default function CustomerCart() {
     if (newQuantity < 1) return;
     
     const newCart = [...cartItems];
+    const item = newCart[index];
+    
+    // Calculate duration
+    const start = new Date(item.startDate);
+    const end = new Date(item.endDate);
+    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Calculate total based on pricing type and duration
+    let totalAmount = 0;
+    if (item.pricingType === "daily") {
+      totalAmount = item.rate * days * newQuantity;
+    } else if (item.pricingType === "weekly") {
+      totalAmount = item.rate * Math.ceil(days / 7) * newQuantity;
+    } else if (item.pricingType === "monthly") {
+      totalAmount = item.rate * Math.ceil(days / 30) * newQuantity;
+    }
+    
     newCart[index].quantity = newQuantity;
-    newCart[index].totalAmount = newCart[index].rate * newQuantity;
+    newCart[index].totalAmount = totalAmount;
     updateCart(newCart);
   };
 
@@ -65,11 +118,11 @@ export default function CustomerCart() {
   };
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.totalAmount, 0);
+    return cartItems.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
   };
 
   const calculateSecurityDeposit = () => {
-    return cartItems.reduce((sum, item) => sum + (item.securityDeposit * item.quantity), 0);
+    return cartItems.reduce((sum, item) => sum + ((item.securityDeposit || 0) * item.quantity), 0);
   };
 
   const calculateTotal = () => {
@@ -157,11 +210,11 @@ export default function CustomerCart() {
                       <div className="mt-3 space-y-1">
                         <div className="flex justify-between text-sm">
                           <span>Rate ({item.pricingType}):</span>
-                          <span>₹{(item.rate / item.quantity).toFixed(2)}</span>
+                          <span>₹{((item.rate || 0) / item.quantity).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Security Deposit (per item):</span>
-                          <span>₹{item.securityDeposit.toFixed(2)}</span>
+                          <span>₹{(item.securityDeposit || 0).toFixed(2)}</span>
                         </div>
                       </div>
 
@@ -204,15 +257,15 @@ export default function CustomerCart() {
                       <div className="mt-3 pt-3 border-t">
                         <div className="flex justify-between text-sm">
                           <span>Rental Amount:</span>
-                          <span>₹{item.totalAmount.toFixed(2)}</span>
+                          <span>₹{(item.totalAmount || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Security Deposit:</span>
-                          <span>₹{(item.securityDeposit * item.quantity).toFixed(2)}</span>
+                          <span>₹{((item.securityDeposit || 0) * item.quantity).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between font-semibold mt-1">
                           <span>Item Total:</span>
-                          <span>₹{(item.totalAmount + (item.securityDeposit * item.quantity)).toFixed(2)}</span>
+                          <span>₹{(item.totalAmount + ((item.securityDeposit || 0) * item.quantity)).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>

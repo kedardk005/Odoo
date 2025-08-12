@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -31,6 +31,26 @@ interface NavigationHeaderProps {
 export default function NavigationHeader({ userType = "admin" }: NavigationHeaderProps) {
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  // Update cart count when storage changes
+  useEffect(() => {
+    const updateCartCount = () => {
+      if (userType === "customer") {
+        try {
+          const cart = JSON.parse(localStorage.getItem("rentalCart") || "[]");
+          setCartItemCount(cart.length);
+        } catch {
+          setCartItemCount(0);
+        }
+      }
+    };
+
+    updateCartCount();
+    window.addEventListener("storage", updateCartCount);
+    
+    return () => window.removeEventListener("storage", updateCartCount);
+  }, [userType]);
 
   const adminMenuItems = [
     { label: "Dashboard", path: "/admin", icon: Home },
@@ -43,7 +63,8 @@ export default function NavigationHeader({ userType = "admin" }: NavigationHeade
   ];
 
   const customerMenuItems = [
-    { label: "Products", path: "/products", icon: Package },
+    { label: "Home", path: "/customer/home", icon: Home },
+    { label: "Products", path: "/customer/products", icon: Package },
     { label: "My Orders", path: "/customer/orders", icon: ShoppingCart },
     { label: "Quotations", path: "/customer/quotations", icon: FileText },
     { label: "Profile", path: "/customer/profile", icon: User },
@@ -57,8 +78,29 @@ export default function NavigationHeader({ userType = "admin" }: NavigationHeade
     setIsMobileMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      // Call logout API
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear user data from storage
+      try {
+        localStorage.removeItem("userId");
+        sessionStorage.removeItem("userId");
+      } catch (error) {
+        console.error("Error clearing storage:", error);
+      }
+      
+      // Redirect to landing page
+      setLocation("/");
+    }
   };
 
   return (
@@ -68,7 +110,7 @@ export default function NavigationHeader({ userType = "admin" }: NavigationHeade
           {/* Logo */}
           <div className="flex items-center">
             <button
-              onClick={() => handleNavigation(userType === "admin" ? "/admin" : "/")}
+              onClick={() => handleNavigation(userType === "admin" ? "/admin" : "/customer/home")}
               className="text-2xl font-bold text-blue-600 hover:text-blue-700"
             >
               RentPro
@@ -104,6 +146,27 @@ export default function NavigationHeader({ userType = "admin" }: NavigationHeade
 
           {/* User Menu */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Cart Button for Customers */}
+            {userType === "customer" && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleNavigation("/customer/cart")}
+                className="relative"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Cart
+                {cartItemCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {cartItemCount}
+                  </Badge>
+                )}
+              </Button>
+            )}
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -112,7 +175,7 @@ export default function NavigationHeader({ userType = "admin" }: NavigationHeade
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
+                <DropdownMenuItem onClick={() => handleNavigation(userType === "admin" ? "/profile" : "/customer/profile")}>
                   <User className="w-4 h-4 mr-2" />
                   Profile
                 </DropdownMenuItem>
@@ -169,9 +232,28 @@ export default function NavigationHeader({ userType = "admin" }: NavigationHeade
                 );
               })}
               
+              {/* Cart Button for Mobile - Customers */}
+              {userType === "customer" && (
+                <button
+                  onClick={() => handleNavigation("/customer/cart")}
+                  className="flex items-center w-full px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 relative"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-3" />
+                  Cart
+                  {cartItemCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {cartItemCount}
+                    </Badge>
+                  )}
+                </button>
+              )}
+              
               <div className="border-t pt-4">
                 <button
-                  onClick={() => handleNavigation("/profile")}
+                  onClick={() => handleNavigation(userType === "admin" ? "/profile" : "/customer/profile")}
                   className="flex items-center w-full px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 >
                   <User className="w-5 h-5 mr-3" />

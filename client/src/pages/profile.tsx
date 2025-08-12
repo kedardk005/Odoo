@@ -12,9 +12,11 @@ import { User, Mail, Phone, MapPin, Calendar, Shield, Edit, Save, X } from "luci
 import { format } from "date-fns";
 
 interface UserProfile {
-  id: number;
-  name: string;
+  id: string;
+  username: string;
   email: string;
+  firstName: string;
+  lastName: string;
   phone?: string;
   address?: string;
   city?: string;
@@ -22,8 +24,13 @@ interface UserProfile {
   pincode?: string;
   dateOfBirth?: string;
   companyName?: string;
+  businessType?: string;
   gstin?: string;
+  profilePicture?: string;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
   createdAt: string;
+  updatedAt?: string;
   totalOrders: number;
   totalSpent: number;
   membershipLevel: string;
@@ -35,16 +42,18 @@ export default function Profile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+
   const { data: profile, isLoading, error } = useQuery<UserProfile>({
-    queryKey: ["/api/profile"],
+    queryKey: ["/api/profile", userId],
     queryFn: async () => {
       // Get user ID from authentication context or localStorage
-      const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
-      if (!userId) {
+      const uid = userId;
+      if (!uid) {
         throw new Error("Please log in to view your profile");
       }
       
-      const response = await fetch(`/api/profile?userId=${userId}`);
+      const response = await fetch(`/api/profile?userId=${uid}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("Profile not found. Please log in again.");
@@ -58,7 +67,8 @@ export default function Profile() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {
-      const response = await fetch("/api/profile?userId=default-user", {
+      const uid = userId || "default-user";
+      const response = await fetch(`/api/profile?userId=${uid}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -69,7 +79,7 @@ export default function Profile() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile", userId] });
       setIsEditing(false);
       toast({
         title: "Profile Updated",
@@ -85,33 +95,7 @@ export default function Profile() {
     },
   });
 
-  // Create test user mutation
-  const createTestUserMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/create-test-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to create test user");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      toast({
-        title: "Test User Created",
-        description: "A test user profile has been created successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Creation Failed",
-        description: "Failed to create test user. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  // Removed test user creation logic - not needed in production
 
   const handleEdit = () => {
     if (profile) {
@@ -176,11 +160,8 @@ export default function Profile() {
             <User className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-medium mb-2">Profile Not Found</h3>
             <p className="text-gray-500 mb-6">{error.message}</p>
-            <Button 
-              onClick={() => createTestUserMutation.mutate()}
-              disabled={createTestUserMutation.isPending}
-            >
-              {createTestUserMutation.isPending ? "Creating..." : "Create Test User"}
+            <Button onClick={() => window.location.href = "/signup"}>
+              Go to Sign Up
             </Button>
           </CardContent>
         </Card>
@@ -196,11 +177,8 @@ export default function Profile() {
             <User className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-medium mb-2">Profile Not Found</h3>
             <p className="text-gray-500 mb-6">Unable to load your profile information.</p>
-            <Button 
-              onClick={() => createTestUserMutation.mutate()}
-              disabled={createTestUserMutation.isPending}
-            >
-              {createTestUserMutation.isPending ? "Creating..." : "Create Test User"}
+            <Button onClick={() => window.location.href = "/signup"}>
+              Go to Sign Up
             </Button>
           </CardContent>
         </Card>
@@ -251,15 +229,28 @@ export default function Profile() {
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 {isEditing ? (
                   <Input
-                    id="name"
-                    value={formData.name || ''}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    id="firstName"
+                    value={formData.firstName || ''}
+                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
                   />
                 ) : (
-                  <p className="text-sm p-2 bg-gray-50 rounded">{profile.name}</p>
+                  <p className="text-sm p-2 bg-gray-50 rounded">{profile.firstName}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                {isEditing ? (
+                  <Input
+                    id="lastName"
+                    value={formData.lastName || ''}
+                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                  />
+                ) : (
+                  <p className="text-sm p-2 bg-gray-50 rounded">{profile.lastName}</p>
                 )}
               </div>
               
@@ -268,7 +259,7 @@ export default function Profile() {
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-gray-500" />
                   <p className="text-sm">{profile.email}</p>
-                  <Badge variant="outline" className="text-xs">Verified</Badge>
+                  <Badge variant="outline" className="text-xs">{profile.isEmailVerified ? 'Verified' : 'Unverified'}</Badge>
                 </div>
               </div>
               

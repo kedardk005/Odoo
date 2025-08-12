@@ -57,16 +57,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // For now, we'll use a simple user ID from query or body
       // In production, this would come from JWT token
-      let userId = req.query.userId as string || req.body.userId || "default-user";
-      
-      // If requesting default-user, try to find the test user by email
-      if (userId === "default-user") {
-        const testUser = await storage.getUserByEmail("test@example.com");
-        if (testUser) {
-          userId = testUser.id;
-        } else {
-          return res.status(404).json({ message: "User not found" });
-        }
+      const userId = (req.query.userId as string) || req.body.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Missing userId. Please sign up or log in." });
       }
 
       const user = await storage.getUser(userId);
@@ -101,16 +94,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/profile", async (req, res) => {
     try {
-      let userId = req.query.userId as string || req.body.userId || "default-user";
-      
-      // If requesting default-user, try to find the test user by email
-      if (userId === "default-user") {
-        const testUser = await storage.getUserByEmail("test@example.com");
-        if (testUser) {
-          userId = testUser.id;
-        } else {
-          return res.status(404).json({ message: "User not found" });
-        }
+      const userId = (req.query.userId as string) || req.body.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Missing userId. Please sign up or log in." });
       }
 
       // Validate the profile data
@@ -129,61 +115,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test user creation route (for development)
-  app.post("/api/create-test-user", async (req, res) => {
+  // Logout route
+  app.post("/api/auth/logout", async (req, res) => {
     try {
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail("test@example.com");
-      if (existingUser) {
-        return res.json({ message: "Test user already exists", user: existingUser });
-      }
-
-      // Create test user with all profile fields
-      const testUserData = {
-        username: "testuser",
-        email: "test@example.com", 
-        password: "password123",
-        firstName: "John",
-        lastName: "Doe",
-        phone: "+91 9876543210",
-        address: "123 Main Street, Apartment 4B",
-        city: "Mumbai",
-        state: "Maharashtra", 
-        pincode: "400001",
-        dateOfBirth: "1990-05-15",
-        companyName: "Tech Solutions Pvt Ltd",
-        businessType: "Software Development",
-        gstin: "27ABCDE1234F1Z5",
-        membershipLevel: "Gold",
-        role: "customer" as const,
-      };
-
-      const newUser = await storage.createUser(testUserData);
-      const { password, ...userResponse } = newUser;
-      
-      res.json({ 
-        message: "Test user created successfully", 
-        user: userResponse 
-      });
+      // In a real app, you would invalidate the JWT token or session here
+      // For now, we'll just return a success response
+      res.json({ message: "Logged out successfully" });
     } catch (error: any) {
-      console.error("Error creating test user:", error);
       res.status(500).json({ message: error.message });
     }
   });
 
+  // Removed /api/create-test-user route (not needed)
+
   // Customer-specific routes
   app.get("/api/customer/orders", async (req, res) => {
     try {
-      let userId = req.query.userId as string || "default-user";
-      
-      // If requesting default-user, try to find the test user by email
-      if (userId === "default-user") {
-        const testUser = await storage.getUserByEmail("test@example.com");
-        if (testUser) {
-          userId = testUser.id;
-        } else {
-          return res.json([]); // Return empty array if no user found
-        }
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.json([]); // Not logged in -> empty
       }
       
       const orders = await storage.getOrders(userId);
@@ -209,16 +159,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/customer/quotations", async (req, res) => {
     try {
-      let userId = req.query.userId as string || "default-user";
-      
-      // If requesting default-user, try to find the test user by email
-      if (userId === "default-user") {
-        const testUser = await storage.getUserByEmail("test@example.com");
-        if (testUser) {
-          userId = testUser.id;
-        } else {
-          return res.json([]); // Return empty array if no user found
-        }
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.json([]); // Not logged in -> empty
       }
       
       const quotations = await storage.getQuotationsByCustomer(userId);
@@ -479,25 +422,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/orders", async (req, res) => {
     try {
-      const { items, ...orderData } = req.body;
-      const orderInfo = insertOrderSchema.parse(orderData);
+      const { items = [], customerId, customerDetails, totalAmount, securityDeposit, notes } = req.body || {};
+      
+      console.log("Creating order with data:", JSON.stringify(req.body, null, 2));
+      
+      if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ message: "At least one item is required" });
+
+      // Validate all product IDs exist before creating order to avoid FK errors
+      const invalidProductIds: string[] = [];
+      for (const it of items) {
+        if (!it?.productId) {
+          invalidProductIds.push('(missing)');
+          continue;
+        }
+        const product = await storage.getProduct(it.productId);
+        if (!product) invalidProductIds.push(it.productId);
+      }
+      if (invalidProductIds.length > 0) {
+        return res.status(400).json({ 
+          message: "One or more product IDs are invalid. Please refresh products and try again.",
+          invalidProductIds
+        });
+      }
+
+      // Resolve/ensure a valid customerId (support guest checkout)
+      let finalCustomerId: string | undefined = customerId;
+      let customerRecord = finalCustomerId ? await storage.getUser(finalCustomerId) : undefined;
+
+      // If provided customerId doesn't exist, try by email or create a lightweight guest
+      if (!customerRecord) {
+        const email = customerDetails?.email as string | undefined;
+        if (email) {
+          const byEmail = await storage.getUserByEmail(email);
+          if (byEmail) {
+            customerRecord = byEmail;
+            finalCustomerId = byEmail.id;
+          }
+        }
+      }
+
+      if (!customerRecord) {
+        // Create minimal guest customer from provided details
+        const firstName = customerDetails?.firstName || "Guest";
+        const lastName = customerDetails?.lastName || "User";
+        const email = customerDetails?.email || `guest_${Date.now()}@example.com`;
+        const usernameBase = (email.split("@")[0] || "guest").replace(/[^a-zA-Z0-9_\-]/g, "");
+        const username = `${usernameBase}_${Math.random().toString(36).slice(2, 6)}`;
+        const password = crypto.randomBytes(8).toString('hex');
+
+        try {
+          const created = await storage.createUser({
+            username,
+            email,
+            password,
+            firstName,
+            lastName,
+            phone: customerDetails?.phone,
+            address: customerDetails?.address,
+            city: customerDetails?.city,
+            state: customerDetails?.state,
+            pincode: customerDetails?.pincode,
+            role: 'customer',
+          } as any);
+          customerRecord = created;
+          finalCustomerId = created.id;
+          console.log("Created guest customer:", { id: created.id, email: created.email, username: created.username });
+        } catch (e: any) {
+          console.error("Failed to create guest customer:", e);
+          return res.status(400).json({ message: "Invalid customer and unable to create guest customer", details: e.message });
+        }
+      }
+
+      // Generate order number
+      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+      // Use provided totals or calculate them
+      let totalAmountNum = totalAmount ? parseFloat(totalAmount.toString()) : 0;
+      let securityDepositNum = securityDeposit ? parseFloat(securityDeposit.toString()) : 0;
+
+      // If totals not provided, calculate them
+      if (!totalAmount || !securityDeposit) {
+        totalAmountNum = 0;
+        securityDepositNum = 0;
+        
+        for (const item of items) {
+          const qty = Number(item.quantity || 1);
+          const itemTotal = parseFloat(item.totalAmount?.toString() || "0");
+          totalAmountNum += itemTotal;
+
+          const product = await storage.getProduct(item.productId);
+          if (product?.securityDeposit) {
+            securityDepositNum += parseFloat(product.securityDeposit.toString()) * qty;
+          }
+        }
+      }
+
+      // Get start and end dates from first item or use defaults
+      const firstItem = items[0];
+      console.log("First item for date extraction:", JSON.stringify(firstItem, null, 2));
+      
+      let startDate, endDate;
+      
+      if (firstItem?.startDate) {
+        startDate = new Date(firstItem.startDate);
+        console.log("Parsed startDate:", startDate);
+      } else {
+        startDate = new Date();
+        console.log("Using default startDate:", startDate);
+      }
+      
+      if (firstItem?.endDate) {
+        endDate = new Date(firstItem.endDate);
+        console.log("Parsed endDate:", endDate);
+      } else {
+        endDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        console.log("Using default endDate:", endDate);
+      }
+
+      const orderInfo = insertOrderSchema.parse({
+        orderNumber,
+        customerId: finalCustomerId!, // ensure resolved/created customer is used
+        status: 'pending',
+        startDate,
+        endDate,
+        totalAmount: totalAmountNum.toFixed(2),
+        securityDeposit: securityDepositNum.toFixed(2),
+        paidAmount: '0.00',
+        remainingAmount: totalAmountNum.toFixed(2),
+        notes: notes || '',
+      });
+      
+      console.log("Creating order with info:", orderInfo);
       
       // Create the order
       const order = await storage.createOrder(orderInfo);
       
+      console.log("Order created:", order);
+      
       // Create order items
       for (const item of items) {
+        const dailyRateNum = parseFloat(item.dailyRate?.toString() || "0");
+        const unitPrice = dailyRateNum > 0 ? dailyRateNum : parseFloat(item.totalAmount?.toString() || "0") / Number(item.quantity || 1);
+        
         const orderItemData = insertOrderItemSchema.parse({
-          ...item,
           orderId: order.id,
+          productId: item.productId,
+          quantity: Number(item.quantity || 1),
+          unitPrice: unitPrice.toFixed(2),
+          totalAmount: parseFloat(item.totalAmount?.toString() || "0").toFixed(2),
         });
+        
+        console.log("Creating order item:", orderItemData);
         await storage.createOrderItem(orderItemData);
         
         // Update product availability
         const product = await storage.getProduct(item.productId);
         if (product) {
           const oldQuantity = product.availableQuantity;
-          const newQuantity = product.availableQuantity - item.quantity;
+          const newQuantity = product.availableQuantity - Number(item.quantity || 1);
           await storage.updateProductAvailability(
             item.productId, 
             newQuantity
@@ -518,7 +600,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(order);
     } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      console.error('❌ Order creation error:', error);
+      res.status(400).json({ 
+        message: error?.message || 'Order creation failed',
+        details: error?.issues || undefined,
+        stack: process.env.NODE_ENV !== 'production' ? error?.stack : undefined
+      });
     }
   });
 
@@ -545,18 +632,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Customer routes
-  app.get("/api/customers", async (req, res) => {
+  // Quotation routes
+  app.get("/api/quotations", async (req, res) => {
     try {
-      // This would normally filter by role, but for simplicity we'll return all users
-      const users = Array.from((storage as any).users.values()).filter((user: any) => user.role === 'customer');
-      const customers = users.map((user: any) => {
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
-      });
-      res.json(customers);
+      const customerId = req.query.customerId as string;
+      const quotations = await storage.getQuotations(customerId);
+      res.json(quotations);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/quotations/:id", async (req, res) => {
+    try {
+      const quotation = await storage.getQuotation(req.params.id);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      res.json(quotation);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/quotations", async (req, res) => {
+    try {
+      const { items = [], customerId, customerDetails, totalAmount, securityDeposit, notes, validUntil } = req.body || {};
+      
+      console.log("Creating quotation with data:", JSON.stringify(req.body, null, 2));
+      
+      if (!customerId) return res.status(400).json({ message: "customerId is required" });
+      if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ message: "At least one item is required" });
+
+      // Generate quotation number
+      const quotationNumber = `QUO-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+      // Use provided totals or calculate them
+      let totalAmountNum = totalAmount ? parseFloat(totalAmount.toString()) : 0;
+      let securityDepositNum = securityDeposit ? parseFloat(securityDeposit.toString()) : 0;
+
+      // If totals not provided, calculate them
+      if (!totalAmount || !securityDeposit) {
+        totalAmountNum = 0;
+        securityDepositNum = 0;
+        
+        for (const item of items) {
+          const qty = Number(item.quantity || 1);
+          const itemTotal = parseFloat(item.totalAmount?.toString() || "0");
+          totalAmountNum += itemTotal;
+
+          const product = await storage.getProduct(item.productId);
+          if (product?.securityDeposit) {
+            securityDepositNum += parseFloat(product.securityDeposit.toString()) * qty;
+          }
+        }
+      }
+
+      // Get start and end dates from first item or use defaults
+      const firstItem = items[0];
+      const startDate = firstItem?.startDate ? new Date(firstItem.startDate) : new Date();
+      const endDate = firstItem?.endDate ? new Date(firstItem.endDate) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      const quotationInfo = insertQuotationSchema.parse({
+        quotationNumber,
+        customerId,
+        status: 'draft',
+        startDate,
+        endDate,
+        totalAmount: totalAmountNum.toFixed(2),
+        securityDeposit: securityDepositNum.toFixed(2),
+        validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        notes: notes || '',
+      });
+      
+      console.log("Creating quotation with info:", quotationInfo);
+      
+      // Create the quotation
+      const quotation = await storage.createQuotation(quotationInfo);
+      
+      console.log("Quotation created:", quotation);
+      
+      // Create quotation items
+      for (const item of items) {
+        const dailyRateNum = parseFloat(item.dailyRate?.toString() || "0");
+        const unitPrice = dailyRateNum > 0 ? dailyRateNum : parseFloat(item.totalAmount?.toString() || "0") / Number(item.quantity || 1);
+        
+        const quotationItemData = insertQuotationItemSchema.parse({
+          quotationId: quotation.id,
+          productId: item.productId,
+          quantity: Number(item.quantity || 1),
+          rate: unitPrice.toFixed(2),
+          totalAmount: parseFloat(item.totalAmount?.toString() || "0").toFixed(2),
+          pricingType: item.pricingType || 'daily',
+        });
+        
+        console.log("Creating quotation item:", quotationItemData);
+        await storage.createQuotationItem(quotationItemData);
+      }
+      
+      res.status(201).json(quotation);
+    } catch (error: any) {
+      console.error("Quotation creation error:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/quotations/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      const quotation = await storage.updateQuotationStatus(req.params.id, status);
+      res.json(quotation);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Customer routes
+  app.get("/api/customers", async (_req, res) => {
+    try {
+      const customers = await storage.getCustomers();
+      // Strip password field before sending
+      const sanitized = customers.map(({ password, ...rest }: any) => rest);
+      res.json(sanitized);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Add customer
+  app.post("/api/customers", async (req, res) => {
+    try {
+      const { username, email, password, firstName, lastName, phone, address, city, state, pincode } = req.body || {};
+      const parsed = insertUserSchema.parse({ username, email, password, firstName, lastName, phone, address, city, state, pincode, role: 'customer' });
+      const existing = await storage.getUserByEmail(parsed.email);
+      if (existing) return res.status(400).json({ message: 'Email already in use' });
+      const created = await storage.createUser(parsed);
+      const { password: _pw, ...safe } = created as any;
+      res.status(201).json(safe);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Delete customer (cleanup dummy data path too)
+  app.delete("/api/customers/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const deleted = await storage.deleteUser(id);
+      const { password, ...safe } = deleted as any;
+      res.json(safe);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
     }
   });
 
@@ -635,6 +861,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Razorpay webhook handler
+  app.post("/api/razorpay/webhook", async (req, res) => {
+    try {
+      const webhookSignature = req.headers['x-razorpay-signature'];
+      const webhookBody = JSON.stringify(req.body);
+      
+      // Verify webhook signature
+      const crypto = require('crypto');
+      const expectedSignature = crypto
+        .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET || '')
+        .update(webhookBody)
+        .digest('hex');
+      
+      if (webhookSignature === expectedSignature) {
+        const event = req.body;
+        
+        // Handle different webhook events
+        switch (event.event) {
+          case 'payment.captured':
+            console.log('Payment captured:', event.payload.payment.entity);
+            // Update payment status in database
+            break;
+          case 'payment.failed':
+            console.log('Payment failed:', event.payload.payment.entity);
+            // Handle payment failure
+            break;
+          default:
+            console.log('Unhandled webhook event:', event.event);
+        }
+        
+        res.json({ status: 'ok' });
+      } else {
+        res.status(400).json({ error: 'Invalid signature' });
+      }
+    } catch (error: any) {
+      console.error('Webhook error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
   // Notification routes
   app.get("/api/notifications/:userId", async (req, res) => {
     try {
@@ -685,7 +951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/razorpay/verify-payment", async (req, res) => {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = req.body;
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id, amount } = req.body;
       
       // Verify the payment signature
       const crypto = require('crypto');
@@ -699,19 +965,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Update payment record
           const payment = await storage.createPayment({
             orderId: order_id,
-            amount: "0", // Will be updated with actual amount
+            amount: amount ? amount.toString() : "0",
             paymentMethod: "razorpay",
-            status: "paid",
+            paymentGateway: "razorpay",
             transactionId: razorpay_payment_id,
-            paidAt: new Date(),
+            gatewayPaymentId: razorpay_payment_id,
+            status: "paid",
           });
+          
+          // Update order status to confirmed after successful payment
+          await storage.updateOrderStatus(order_id, 'confirmed');
           
           // Send real-time notification for payment status change
           realtimeService.notifyPaymentStatusChange(
             order_id,
             'unknown', // Customer ID not available in this context
             'pending',
-            'paid',
+            'completed',
             payment
           );
           

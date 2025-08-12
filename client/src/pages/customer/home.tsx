@@ -20,15 +20,41 @@ import NavigationHeader from "@/components/NavigationHeader";
 export default function CustomerHome() {
   const [, setLocation] = useLocation();
 
-  // Mock customer data - in real app, get from auth context
-  const customer = {
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com"
+  // Get user ID from localStorage/sessionStorage
+  const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+
+  // Fetch user profile data
+  const { data: userProfile } = useQuery({
+    queryKey: ["/api/profile", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/profile?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+
+  // Use profile data or fallback to default
+  const customer = userProfile ? {
+    firstName: userProfile.firstName || "User",
+    lastName: userProfile.lastName || "",
+    email: userProfile.email || ""
+  } : {
+    firstName: "User",
+    lastName: "",
+    email: ""
   };
 
   const { data: recentOrders = [] } = useQuery({
-    queryKey: ["/api/orders/customer/customer-temp-id"],
+    queryKey: ["/api/customer/orders", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const response = await fetch(`/api/customer/orders?userId=${userId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId,
   });
 
   const { data: featuredProducts = [] } = useQuery({

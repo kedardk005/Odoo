@@ -50,6 +50,7 @@ export interface IStorage {
   // Delivery operations
   getDeliveries(orderId?: string): Promise<Delivery[]>;
   createDelivery(delivery: InsertDelivery): Promise<Delivery>;
+  getDelivery(id: string): Promise<Delivery | undefined>;
 
   // Payment operations
   getPayments(orderId?: string): Promise<Payment[]>;
@@ -111,8 +112,14 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async deleteUser(id: string): Promise<User> {
+    const [deleted] = await db.delete(users).where(eq(users.id, id)).returning();
+    if (!deleted) throw new Error('User not found');
+    return deleted;
+  }
+
   async getCustomers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(desc(users.createdAt));
+    return await db.select().from(users).where(eq(users.role, 'customer')).orderBy(desc(users.createdAt));
   }
 
   // Category operations
@@ -232,11 +239,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(orderData: InsertOrder): Promise<Order> {
-    const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const [order] = await db.insert(orders).values({
+    // Generate orderNumber if not provided
+    const finalOrderData = {
       ...orderData,
-      orderNumber
-    }).returning();
+      orderNumber: orderData.orderNumber || `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+    };
+    
+    const [order] = await db.insert(orders).values(finalOrderData).returning();
     return order;
   }
 
@@ -272,6 +281,11 @@ export class DatabaseStorage implements IStorage {
 
   async createDelivery(deliveryData: InsertDelivery): Promise<Delivery> {
     const [delivery] = await db.insert(deliveries).values(deliveryData).returning();
+    return delivery;
+  }
+
+  async getDelivery(id: string): Promise<Delivery | undefined> {
+    const [delivery] = await db.select().from(deliveries).where(eq(deliveries.id, id));
     return delivery;
   }
 
@@ -320,13 +334,20 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(eq(orders.status, 'delivered'));
 
+    // Pending orders count
+    const [pendingOrdersResult] = await db
+      .select({ count: count() })
+      .from(orders)
+      .where(eq(orders.status, 'pending'));
+
     return {
-      totalRevenue: parseFloat(revenueResult?.total || '0'),
-      activeRentals: activeRentalsResult?.count || 0,
-      newCustomers: totalCustomersResult?.count || 0,
-      inventoryUtilization: 0, // Calculate based on products
-      overdueOrders: 0, // Calculate based on return dates
-      pendingQuotations: 0 // Calculate from quotations table
+      totalRevenue: parseFloat((revenueResult?.total as any) || '0'),
+      activeRentals: Number((activeRentalsResult as any)?.count) || 0,
+      totalCustomers: Number((totalCustomersResult as any)?.count) || 0,
+      pendingOrders: Number((pendingOrdersResult as any)?.count) || 0,
+      inventoryUtilization: 0, // TODO: Calculate based on products
+      overdueOrders: 0, // TODO: Calculate based on return dates
+      pendingQuotations: 0 // TODO: Calculate from quotations table
     };
   }
 
@@ -391,6 +412,9 @@ export class DatabaseStorage implements IStorage {
       startDate: quotation.startDate,
       endDate: quotation.endDate,
       totalAmount: quotation.totalAmount,
+      securityDeposit: quotation.securityDeposit,
+      paidAmount: "0.00",
+      remainingAmount: quotation.totalAmount,
       status: 'pending',
       notes: `Converted from quotation ${quotation.quotationNumber}`
     }).returning();
@@ -401,13 +425,13 @@ export class DatabaseStorage implements IStorage {
         orderId: order.id,
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice
+        unitPrice: item.rate,
+        totalAmount: item.totalAmount
       });
     }
 
     // Update quotation status
-    await db.update(quotations).set({ status: 'converted' }).where(eq(quotations.id, quotationId));
+    await db.update(quotations).set({ status: 'approved' }).where(eq(quotations.id, quotationId));
 
     return order;
   }
@@ -432,17 +456,19 @@ export class DatabaseStorage implements IStorage {
 
   // Pricing rules operations
   async getPricingRules(productId?: string, categoryId?: string): Promise<PricingRule[]> {
-    let query = db.select().from(pricingRules).where(eq(pricingRules.isActive, true));
+    const conditions = [eq(pricingRules.isActive, true)];
     
     if (productId) {
-      query = query.where(eq(pricingRules.productId, productId));
+      conditions.push(eq(pricingRules.productId, productId));
     }
     
     if (categoryId) {
-      query = query.where(eq(pricingRules.categoryId, categoryId));
+      conditions.push(eq(pricingRules.categoryId, categoryId));
     }
     
-    return await query.orderBy(desc(pricingRules.createdAt));
+    return await db.select().from(pricingRules)
+      .where(and(...conditions))
+      .orderBy(desc(pricingRules.createdAt));
   }
 
   async createPricingRule(ruleData: InsertPricingRule): Promise<PricingRule> {
